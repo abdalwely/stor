@@ -68,15 +68,16 @@ export const createAccount = async (
 
 // Create initial store for merchants
 const createInitialStore = async (userId: string, userData: Partial<UserData>): Promise<string> => {
-  const storeId = `store_${userId}`;
-  const store = {
-    id: storeId,
+  const { storeService } = await import('./firestore');
+
+  const storeData = {
     ownerId: userId,
-    name: userData.businessName || `${userData.firstName}'s Store`,
-    description: '',
+    name: userData.businessName || `متجر ${userData.firstName}`,
+    description: `متجر ${userData.firstName} للتجارة الإلكترونية`,
     logo: '',
-    subdomain: storeId.toLowerCase(),
-    template: 'default',
+    subdomain: `store_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`,
+    customDomain: '',
+    template: 'modern',
     customization: {
       colors: {
         primary: '#FF6B35',
@@ -90,7 +91,7 @@ const createInitialStore = async (userId: string, userData: Partial<UserData>): 
       },
       layout: {
         headerStyle: 'modern',
-        productCardStyle: 'card',
+        productCardStyle: 'elegant',
         showCategories: true,
         showSearch: true
       }
@@ -99,13 +100,13 @@ const createInitialStore = async (userId: string, userData: Partial<UserData>): 
       currency: 'SAR',
       language: 'ar',
       shipping: {
-        enabled: false,
-        freeShippingThreshold: 0,
-        shippingCost: 0
+        enabled: true,
+        freeShippingThreshold: 200,
+        shippingCost: 25
       },
       payment: {
         cashOnDelivery: true,
-        bankTransfer: false,
+        bankTransfer: true,
         creditCard: false
       }
     },
@@ -115,13 +116,10 @@ const createInitialStore = async (userId: string, userData: Partial<UserData>): 
       address: '',
       city: userData.city || ''
     },
-    status: 'pending',
-    createdAt: new Date(),
-    updatedAt: new Date()
+    status: 'pending' as const
   };
 
-  await setDoc(doc(db, 'stores', storeId), store);
-  return storeId;
+  return await storeService.create(storeData);
 };
 
 // Sign in user with enhanced error handling

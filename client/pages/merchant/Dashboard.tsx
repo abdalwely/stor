@@ -350,6 +350,12 @@ export default function MerchantDashboard() {
                   </div>
                   <div className="flex items-center space-x-2 rtl:space-x-reverse">
                     {getStatusBadge(store.status)}
+                    <Link to="/merchant/advanced-customization">
+                      <Button size="sm" className="btn-gradient">
+                        <Settings className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                        تخصيص المتجر
+                      </Button>
+                    </Link>
                     <Link to={`/store/${store.subdomain}`} target="_blank">
                       <Button size="sm" variant="outline">
                         <Eye className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
@@ -459,15 +465,90 @@ export default function MerchantDashboard() {
                         <p className="text-sm text-yellow-700">ابدأ بإضافة منتجات نموذجية لاختبار متجرك</p>
                       </div>
                       <Button
-                        onClick={() => {
+                        onClick={async () => {
                           if (store) {
-                            const { initializeSampleData } = require('@/lib/store-management');
-                            initializeSampleData(store.id);
-                            loadDashboardData(); // إعادة تحميل البيانات
-                            toast({
-                              title: 'تم إضافة منتجات نموذجية! 🎉',
-                              description: 'تم إضافة 3 منتجات نموذجية لمتجرك'
-                            });
+                            try {
+                              // إضافة منتجات نموذجية مباشرة عبر Firestore
+                              await productService.create({
+                                storeId: store.id,
+                                name: 'هاتف ذكي متطور',
+                                description: 'هاتف ذكي بمواصفات عالية وكاميرا ممتازة',
+                                price: 1999,
+                                salePrice: 1799,
+                                images: ['/placeholder.svg'],
+                                category: 'الإلكترونيات',
+                                tags: ['هاتف', 'ذكي', 'كاميرا'],
+                                inventory: {
+                                  quantity: 15,
+                                  sku: 'PHONE-001',
+                                  trackInventory: true
+                                },
+                                seo: {
+                                  title: 'هاتف ذكي متطور',
+                                  description: 'هاتف ذكي بمواصفات عالية',
+                                  keywords: ['هاتف', 'ذكي']
+                                },
+                                status: 'active',
+                                featured: true
+                              });
+
+                              await productService.create({
+                                storeId: store.id,
+                                name: 'قميص قطني راقي',
+                                description: 'قميص رجالي من القطن الخالص بتصميم عصري',
+                                price: 149,
+                                images: ['/placeholder.svg'],
+                                category: 'الأزياء',
+                                tags: ['قميص', 'رجالي', 'قطن'],
+                                inventory: {
+                                  quantity: 30,
+                                  sku: 'SHIRT-001',
+                                  trackInventory: true
+                                },
+                                seo: {
+                                  title: 'قميص قطني راقي',
+                                  description: 'قميص رجالي من القطن الخالص',
+                                  keywords: ['قميص', 'قطن']
+                                },
+                                status: 'active',
+                                featured: true
+                              });
+
+                              await productService.create({
+                                storeId: store.id,
+                                name: 'مصباح LED ذكي',
+                                description: 'مصباح LED قابل ل��تحكم عبر التطبيق',
+                                price: 89,
+                                images: ['/placeholder.svg'],
+                                category: 'المنزل والحديقة',
+                                tags: ['مصباح', 'ذكي', 'LED'],
+                                inventory: {
+                                  quantity: 25,
+                                  sku: 'LAMP-001',
+                                  trackInventory: true
+                                },
+                                seo: {
+                                  title: 'مصباح LED ذكي',
+                                  description: 'مصباح LED قابل للتحكم',
+                                  keywords: ['مصباح', 'LED']
+                                },
+                                status: 'active',
+                                featured: false
+                              });
+
+                              loadDashboardData(); // إعادة تحميل البيانات
+                              toast({
+                                title: 'تم إضافة منتجات نموذجية! 🎉',
+                                description: 'تم إضافة 3 منتجات نموذجية لمتجرك'
+                              });
+                            } catch (error) {
+                              console.error('Error adding sample products:', error);
+                              toast({
+                                title: 'خطأ',
+                                description: 'حدث خطأ أثناء إضافة المنتجات',
+                                variant: "destructive"
+                              });
+                            }
                           }
                         }}
                         variant="outline"

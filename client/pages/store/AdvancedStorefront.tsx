@@ -8,14 +8,15 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  getStores,
-  getProducts,
-  getCategories,
+  storeService,
+  productService,
+  categoryService,
   Store,
   Product,
   Category
-} from '@/lib/store-management';
-import { storeSyncManager, waitForStoreData } from '@/lib/store-sync';
+} from '@/lib/firestore';
+import { StoreCustomerProvider, useStoreCustomer } from '@/contexts/StoreCustomerContext';
+import { CustomerLoginModal } from '@/components/CustomerLoginModal';
 import CheckoutPage from './CheckoutPage';
 import OrderTrackingPage from './OrderTrackingPage';
 import { 
@@ -39,6 +40,7 @@ import {
   Truck,
   Shield,
   RotateCcw,
+  Award,
   Phone,
   Mail,
   MapPin,
@@ -51,7 +53,6 @@ import {
   ThumbsUp,
   MessageCircle,
   TrendingUp,
-  Award,
   Zap,
   Clock,
   CheckCircle,
@@ -79,15 +80,17 @@ interface FilterOptions {
   sortBy: 'newest' | 'price_low' | 'price_high' | 'rating' | 'popularity';
 }
 
-export default function AdvancedStorefront() {
+function AdvancedStorefront() {
   const { subdomain } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isLoggedIn } = useStoreCustomer();
   
   const [store, setStore] = useState<Store | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState('home');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -104,6 +107,8 @@ export default function AdvancedStorefront() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [completedOrderId, setCompletedOrderId] = useState<string | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginPendingAction, setLoginPendingAction] = useState<() => void | null>(null);
 
   useEffect(() => {
     loadStoreData();
@@ -146,7 +151,7 @@ export default function AdvancedStorefront() {
 
     // Listen for customization updates
     const handleCustomizationUpdate = (e: MessageEvent) => {
-      // استخدام subdomain بدلاً من store.id لتجنب dependency
+      // استخدام subdomain بدلاً من store.id لتجن�� dependency
       if (e.data.type === 'STORE_CUSTOMIZATION_UPDATED') {
         console.log('🎨 Store customization updated, reloading...');
         debouncedReload();
@@ -193,7 +198,7 @@ export default function AdvancedStorefront() {
       window.removeEventListener('message', handleCustomizationUpdate);
       window.removeEventListener('storage', handleStorageUpdate);
     };
-  }, [subdomain]); // إزالة store من dependencies لتجنب infinite loop
+  }, [subdomain]); // إزالة store م�� dependencies لتجنب infinite loop
 
   const loadStoreData = async () => {
     try {
@@ -201,69 +206,28 @@ export default function AdvancedStorefront() {
 
       console.log('🔍 Searching for store with subdomain:', subdomain);
 
-      let stores = storeSyncManager.getStoresWithFallback();
-
-      console.log('📦 Available stores:', stores.map(s => ({ name: s.name, subdomain: s.subdomain, id: s.id })));
-
-      if (stores.length === 0) {
-        console.log('⏳ No stores found, trying direct localStorage access...');
-
-        // محاولة قراءة البيانات مباشرة من localStorage
-        try {
-          const directStores = localStorage.getItem('stores');
-          if (directStores) {
-            const parsedStores = JSON.parse(directStores);
-            if (Array.isArray(parsedStores) && parsedStores.length > 0) {
-              stores = parsedStores.map((store: any) => ({
-                ...store,
-                createdAt: new Date(store.createdAt),
-                updatedAt: new Date(store.updatedAt)
-              }));
-              console.log('📦 Loaded stores directly from localStorage:', stores.length);
-            }
-          }
-        } catch (error) {
-          console.error('Error reading stores from localStorage:', error);
-        }
-
-        // إذا لم نجد بيانات، انتظر
-        if (stores.length === 0) {
-          console.log('⏳ Still no stores found, waiting for data...');
-          stores = await waitForStoreData(subdomain, 5000);
-          console.log('📦 Stores after waiting:', stores.map(s => ({ name: s.name, subdomain: s.subdomain, id: s.id })));
-        }
-      }
-
-      let foundStore = stores.find(s => s.subdomain === subdomain);
-
-      // إذا لم يتم العثور على المتجر بالـ subdomain، جرب البحث بالـ id
-      if (!foundStore && subdomain?.startsWith('store-')) {
-        foundStore = stores.find(s => s.id === subdomain);
-        console.log('🔍 Searching by ID instead of subdomain');
-      }
-
-      // إذا لم يتم العثور عليه، جرب البحث بجزء من الـ subdomain
-      if (!foundStore) {
-        foundStore = stores.find(s => s.subdomain.includes(subdomain) || subdomain.includes(s.subdomain));
-        console.log('🔍 Trying partial subdomain match');
-      }
-
-      if (!foundStore) {
-        console.error('❌ Store not found! Looking for subdomain:', subdomain);
-        console.error('Available stores:', stores.map(s => ({
-          name: s.name,
-          subdomain: s.subdomain,
-          id: s.id,
-          ownerId: s.ownerId
-        })));
-        setLoading(false);
+      if (!subdomain) {
+        setError('رابط المتجر غير صحيح');
         return;
       }
 
+      // البحث عن المتجر باستخدام Firestore
+      let foundStore = await storeService.getBySubdomain(subdomain);
+
+      if (!foundStore) {
+        console.error('❌ Store not found! Looking for subdomain:', subdomain);
+        setError('المتجر غير موجود أو غير نشط');
+        return;
+      }
+
+      console.log('✅ Found store:', foundStore.name);
       setStore(foundStore);
 
-      const storeProducts = getProducts(foundStore.id);
-      const storeCategories = getCategories(foundStore.id);
+      // تحميل المنتجات والتصنيفات من Firestore
+      const [storeProducts, storeCategories] = await Promise.all([
+        productService.getByStore(foundStore.id),
+        categoryService.getByStore(foundStore.id)
+      ]);
 
       setProducts(storeProducts);
       setCategories(storeCategories);
@@ -273,7 +237,7 @@ export default function AdvancedStorefront() {
         subdomain: foundStore.subdomain,
         products: storeProducts.length,
         categories: storeCategories.length,
-        customization: foundStore.customization ? 'موجود' : 'غير موجود',
+        customization: foundStore.customization ? '��وجود' : 'غير موجود',
         primaryColor: foundStore.customization?.colors?.primary || 'غير محدد'
       });
 
@@ -285,9 +249,38 @@ export default function AdvancedStorefront() {
   };
 
   const addToCart = (productId: string, quantity: number = 1) => {
+    if (!isLoggedIn) {
+      // إذا لم يكن مسجل دخول، احفظ العمل المطلوب وأظهر نافذة تسجيل الدخول
+      const checkLoginAndExecute = () => {
+        setCart(prev => {
+          const existingItem = prev.find(item => item.productId === productId);
+
+          if (existingItem) {
+            return prev.map(item =>
+              item.productId === productId
+                ? { ...item, quantity: item.quantity + quantity }
+                : item
+            );
+          } else {
+            return [...prev, { productId, quantity }];
+          }
+        });
+
+        toast({
+          title: 'تم إضافة المنتج للسلة',
+          description: 'يمكنك مراجعة سلة التسوق الآن'
+        });
+      };
+
+      setLoginPendingAction(() => checkLoginAndExecute);
+      setShowLoginModal(true);
+      return;
+    }
+
+    // إذا كان مسجل دخول، أضف المنتج مباشرة
     setCart(prev => {
       const existingItem = prev.find(item => item.productId === productId);
-      
+
       if (existingItem) {
         return prev.map(item =>
           item.productId === productId
@@ -298,7 +291,7 @@ export default function AdvancedStorefront() {
         return [...prev, { productId, quantity }];
       }
     });
-    
+
     toast({
       title: 'تم إضافة المنتج للسلة',
       description: 'يمكنك مراجعة سلة التسوق الآن'
@@ -314,7 +307,7 @@ export default function AdvancedStorefront() {
       
       toast({
         title: isInWishlist ? 'تم حذف المنتج من المفضلة' : 'تم إضافة المنتج للمفضلة',
-        description: isInWishlist ? 'تم حذف المنتج من قائمة المفضلة' : 'تم إضافة المنتج لقائمة المفضلة'
+        description: isInWishlist ? 'تم حذف المنت�� من قائمة المفضلة' : 'تم إضافة المن��ج لقائمة المفضلة'
       });
       
       return newWishlist;
@@ -411,7 +404,7 @@ export default function AdvancedStorefront() {
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={loading}
             >
-              {loading ? 'جاري إعادة المحاولة...' : 'إعادة المحاولة'}
+              {loading ? 'جاري إعادة المحا��لة...' : 'إعادة المحاولة'}
             </Button>
 
             <Button
@@ -427,12 +420,12 @@ export default function AdvancedStorefront() {
               variant="outline"
               className="w-full"
             >
-              العودة للصفحة الرئيسية
+              ا��عودة للصفحة الرئيسية
             </Button>
           </div>
 
           <div className="text-sm text-gray-500 bg-gray-100 p-4 rounded-lg text-right">
-            <p><strong>معلومات التشخيص:</strong></p>
+            <p><strong>معلوم��ت التشخيص:</strong></p>
             <p>الرابط المطلوب: {subdomain}</p>
             <p>حالة التحميل: {loading ? 'جاري التحميل' : 'مكتمل'}</p>
             <div className="mt-2 text-xs">
@@ -444,6 +437,29 @@ export default function AdvancedStorefront() {
               </ol>
             </div>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // عرض رسالة الخطأ
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center max-w-md mx-auto p-8">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-lg mb-4">
+            <h2 className="text-xl font-bold mb-2">خطأ في تحميل المتجر</h2>
+            <p>{error}</p>
+          </div>
+          <Button
+            onClick={() => {
+              setError(null);
+              loadStoreData();
+            }}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            إعادة المحاولة
+          </Button>
         </div>
       </div>
     );
@@ -485,19 +501,162 @@ export default function AdvancedStorefront() {
       }}
     >
       {/* Enhanced Header */}
-      <Header
-        store={store}
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        cart={cart}
-        wishlist={wishlist}
-        categories={categories}
-        currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
-        setSelectedProduct={setSelectedProduct}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+      <header
+        className="sticky top-0 z-50 shadow-lg"
+        style={{
+          backgroundColor: store?.customization.colors.headerBackground || store?.customization.colors.background || '#ffffff',
+          borderBottom: `1px solid ${store?.customization.colors.borderColor || '#e5e7eb'}`
+        }}
+      >
+        <div className={`${containerClass} mx-auto px-4`}>
+          <div className="flex items-center justify-between h-20">
+            {/* Logo and Store Name */}
+            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+              <div className="flex items-center space-x-2 rtl:space-x-reverse">
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl"
+                  style={{ backgroundColor: store?.customization.colors.primary || '#2563eb' }}
+                >
+                  {store?.name.charAt(0)}
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold">{store?.name}</h1>
+                  <p className="text-sm text-gray-600">{store?.description}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Search Bar */}
+            <div className="flex-1 max-w-md mx-8">
+              <div className="relative">
+                <Search className="absolute right-3 rtl:left-3 rtl:right-auto top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="ابحث عن المنتجات..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 rtl:pr-10 rtl:pl-4 w-full"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center space-x-4 rtl:space-x-reverse">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage('wishlist')}
+                className="relative"
+              >
+                <Heart className="h-5 w-5" />
+                {wishlist.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                    {wishlist.length}
+                  </Badge>
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setCurrentPage('cart')}
+                className="relative"
+              >
+                <ShoppingCart className="h-5 w-5" />
+                {cart.length > 0 && (
+                  <Badge className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-red-500">
+                    {cart.length}
+                  </Badge>
+                )}
+              </Button>
+
+              <Button variant="ghost" size="sm">
+                <User className="h-5 w-5" />
+              </Button>
+
+              {/* Mobile Menu Toggle */}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="hidden md:flex items-center space-x-8 rtl:space-x-reverse py-4 border-t border-gray-200">
+            <Button
+              variant={currentPage === 'home' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setCurrentPage('home')}
+            >
+              <Home className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+              الرئيسية
+            </Button>
+
+            {categories.slice(0, 5).map((category) => (
+              <Button
+                key={category.id}
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSelectedCategory(category.name);
+                  setCurrentPage('products');
+                }}
+              >
+                {category.name}
+              </Button>
+            ))}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setCurrentPage('products')}
+            >
+              جميع ال��نتجات
+            </Button>
+          </nav>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden border-t border-gray-200 py-4">
+              <div className="space-y-2">
+                <Button
+                  variant={currentPage === 'home' ? 'default' : 'ghost'}
+                  size="sm"
+                  className="w-full justify-start"
+                  onClick={() => {
+                    setCurrentPage('home');
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  <Home className="h-4 w-4 mr-2 rtl:ml-2 rtl:mr-0" />
+                  الرئيسية
+                </Button>
+
+                {categories.map((category) => (
+                  <Button
+                    key={category.id}
+                    variant="ghost"
+                    size="sm"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      setSelectedCategory(category.name);
+                      setCurrentPage('products');
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    {category.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
 
       {/* Main Content */}
       <main className={`${containerClass} mx-auto px-4 py-8`}>
@@ -622,7 +781,66 @@ export default function AdvancedStorefront() {
 
       {/* Enhanced Footer */}
       <Footer store={store} />
+
+      {/* Customer Login Modal */}
+      {store && (
+        <CustomerLoginModal
+          isOpen={showLoginModal}
+          onClose={() => {
+            setShowLoginModal(false);
+            setLoginPendingAction(null);
+          }}
+          storeId={store.id}
+          storeName={store.name}
+          onLoginSuccess={() => {
+            if (loginPendingAction) {
+              loginPendingAction();
+              setLoginPendingAction(null);
+            }
+          }}
+        />
+      )}
     </div>
+  );
+}
+
+// Enhanced AdvancedStorefront with authentication
+function AdvancedStorefrontWithAuth() {
+  const { subdomain } = useParams();
+  const [storeData, setStoreData] = useState<{ id: string; name: string } | null>(null);
+
+  useEffect(() => {
+    const loadStoreInfo = async () => {
+      if (!subdomain) return;
+
+      try {
+        const foundStore = await storeService.getBySubdomain(subdomain);
+        if (foundStore) {
+          setStoreData({ id: foundStore.id, name: foundStore.name });
+        }
+      } catch (error) {
+        console.error('Error loading store info:', error);
+      }
+    };
+
+    loadStoreInfo();
+  }, [subdomain]);
+
+  if (!storeData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>جاري تحميل المتجر...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <StoreCustomerProvider storeId={storeData.id}>
+      <AdvancedStorefront />
+    </StoreCustomerProvider>
   );
 }
 
@@ -644,7 +862,7 @@ const Header = ({ store, searchQuery, setSearchQuery, cart, wishlist, categories
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <Truck className="h-4 w-4" />
-            <span>شحن مجاني للطلبات فوق {store.settings.shipping.freeShippingThreshold} ر.س</span>
+            <span>��حن مجاني للطلبات فوق {store.settings.shipping.freeShippingThreshold} ر.س</span>
           </div>
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4" />
@@ -833,7 +1051,7 @@ const Header = ({ store, searchQuery, setSearchQuery, cart, wishlist, categories
         <div className="mt-4 md:hidden">
           <div className="relative">
             <Input
-              placeholder="ابحث عن المنتجات..."
+              placeholder="ا��حث عن المنتجات..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -866,7 +1084,7 @@ const Homepage = ({ store, products, categories, onCategorySelect, onProductSele
             مرحباً ��كم في {store.name}
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90">
-            اكتشف أفضل ال��نتجات بأسعار مميزة وجودة عالية
+            اكتشف ��فضل ال��نتجات بأسعار مميزة وجودة عالية
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -901,7 +1119,7 @@ const Homepage = ({ store, products, categories, onCategorySelect, onProductSele
         </div>
         <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-4 text-white text-center">
           <Shield className="h-8 w-8 mx-auto mb-2" />
-          <div className="text-sm font-semibold">ضمان الجودة</div>
+          <div className="text-sm font-semibold">ضم��ن الجودة</div>
         </div>
         <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-4 text-white text-center">
           <Award className="h-8 w-8 mx-auto mb-2" />
@@ -916,7 +1134,7 @@ const Homepage = ({ store, products, categories, onCategorySelect, onProductSele
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold mb-4">تسوق حسب الفئة</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            اكتشف مجموع��نا المتنوعة من المنتجات المصنفة خصيصاً لتلبية احتياجاتك
+            اكتشف مجموع��نا المتنوعة من المنتجات المصنفة خصيصاً لتلبي�� احتياجاتك
           </p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
@@ -951,7 +1169,7 @@ const Homepage = ({ store, products, categories, onCategorySelect, onProductSele
     {/* Featured Products */}
     <section>
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold mb-4">المنتجات المميزة</h2>
+        <h2 className="text-3xl font-bold mb-4">ا��منتجات المميزة</h2>
         <p className="text-gray-600 max-w-2xl mx-auto">
           اختيارنا الخاص ��ن أفضل المنتجات التي تلقى إعجاب عملائنا
         </p>
@@ -975,7 +1193,7 @@ const Homepage = ({ store, products, categories, onCategorySelect, onProductSele
         <div className="text-center py-12">
           <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد منتجات مميزة</h3>
-          <p className="text-gray-600 mb-4">سيتم عرض المنتجات المميزة هنا قريباً</p>
+          <p className="text-gray-600 mb-4">سيتم عرض الم��تجات المميزة هنا ��ريباً</p>
           <Button onClick={() => setCurrentPage('products')}>
             تصفح جميع المنتجات
           </Button>
@@ -1005,7 +1223,7 @@ const Homepage = ({ store, products, categories, onCategorySelect, onProductSele
           >
             {categories.length}+
           </div>
-          <div className="text-gray-600">فئة مختلفة</div>
+          <div className="text-gray-600">فئة مختلف��</div>
         </div>
         <div>
           <div 
@@ -1293,7 +1511,7 @@ const ProductsPage = ({ products, categories, filters, setFilters, viewMode, set
           <div className="text-center py-12">
             <Package className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">لا توجد منتجات</h3>
-            <p className="text-gray-600">لم يتم العثور على منتجات تطابق الفلاتر المحددة</p>
+            <p className="text-gray-600">لم يتم الع��ور على منتجات تطابق الفلاتر المحددة</p>
           </div>
         ) : (
           <div className={
@@ -1394,7 +1612,7 @@ const ProductListItem = ({ product, onSelect, onAddToCart, onToggleWishlist, isI
             
             <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600">
-                المخزون: {product.stock}
+                المخزو��: {product.stock}
               </span>
               <Button
                 onClick={() => onAddToCart(product.id)}
@@ -1726,8 +1944,8 @@ const CartPage = ({ cart, products, store, onUpdateQuantity, onProceedToCheckout
                 
                 {getCartTotal() < store.settings.shipping.freeShippingThreshold && (
                   <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-                    أضف {store.settings.shipping.freeShippingThreshold - getCartTotal()} ر.س 
-                    أكثر للحصول على شحن مجاني!
+                    ��ضف {store.settings.shipping.freeShippingThreshold - getCartTotal()} ر.س 
+                    أك��ر للحصول على شحن مجاني!
                   </div>
                 )}
               </div>
@@ -1830,7 +2048,7 @@ const Footer = ({ store }: any) => (
         <div>
           <h4 className="font-semibold text-lg mb-4">خدمة العملاء</h4>
           <ul className="space-y-2 text-gray-600">
-            <li><a href="#" className="hover:text-blue-600 transition-colors">الأسئلة الشائعة</a></li>
+            <li><a href="#" className="hover:text-blue-600 transition-colors">الأسئلة ا��شائعة</a></li>
             <li><a href="#" className="hover:text-blue-600 transition-colors">سياسة الإرجاع</a></li>
             <li><a href="#" className="hover:text-blue-600 transition-colors">الشروط والأحكام</a></li>
             <li><a href="#" className="hover:text-blue-600 transition-colors">سياسة الخصوصية</a></li>
@@ -1868,7 +2086,7 @@ const Footer = ({ store }: any) => (
           © 2024 {store.name}. جميع الحقوق محفوظة.
         </p>
         <div className="flex items-center gap-6 mt-4 md:mt-0">
-          <span className="text-sm text-gray-500">مدعوم بتقنية </span>
+          <span className="text-sm text-gray-500">مدعوم بتقني�� </span>
           <div className="flex items-center gap-2">
             <Shield className="h-4 w-4 text-green-600" />
             <span className="text-sm">دفع آمن</span>

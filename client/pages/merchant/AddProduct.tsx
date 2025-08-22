@@ -10,12 +10,11 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  createProduct, 
-  getStoreByOwnerId, 
-  getCategories,
-  createCategory 
-} from '@/lib/store-management';
+import {
+  productService,
+  storeService,
+  categoryService
+} from '@/lib/firestore';
 import { 
   Package,
   Upload,
@@ -36,13 +35,31 @@ export default function AddProduct() {
   const { toast } = useToast();
   
   const [loading, setLoading] = useState(false);
-  const [store, setStore] = useState(() => {
-    return userData ? getStoreByOwnerId(userData.uid) : null;
-  });
-  
-  const [categories] = useState(() => {
-    return store ? getCategories(store.id) : [];
-  });
+  const [store, setStore] = useState(null);
+  const [categories, setCategories] = useState([]);
+
+  // تحميل بيانات المتجر والتصنيفات
+  useState(() => {
+    const loadStoreData = async () => {
+      if (userData) {
+        try {
+          const stores = await storeService.getByOwner(userData.uid);
+          if (stores.length > 0) {
+            const storeData = stores[0];
+            setStore(storeData);
+
+            // تحميل التصنيفات
+            const categoriesData = await categoryService.getByStore(storeData.id);
+            setCategories(categoriesData);
+          }
+        } catch (error) {
+          console.error('Error loading store data:', error);
+        }
+      }
+    };
+
+    loadStoreData();
+  }, [userData]);
 
   const [productData, setProductData] = useState({
     name: '',
@@ -201,28 +218,30 @@ export default function AddProduct() {
     setLoading(true);
     
     try {
-      const newProduct = createProduct({
-        ...productData,
-        images: images.length > 0 ? images : ['/placeholder-product.jpg'],
+      const productId = await productService.create({
         storeId: store.id,
-        rating: 0,
-        reviewCount: 0
+        name: productData.name,
+        description: productData.description,
+        price: productData.price,
+        salePrice: productData.originalPrice > productData.price ? productData.originalPrice : undefined,
+        images: images.length > 0 ? images : ['/placeholder.svg'],
+        category: productData.category,
+        subcategory: productData.subCategory,
+        tags: productData.tags,
+        inventory: {
+          quantity: productData.stock,
+          sku: productData.sku,
+          trackInventory: true
+        },
+        variants: productData.variants,
+        seo: {
+          title: productData.name,
+          description: productData.description,
+          keywords: productData.tags
+        },
+        status: 'active',
+        featured: productData.featured
       });
-
-      // Broadcast product creation to other windows/tabs
-      window.postMessage({
-        type: 'PRODUCT_CREATED',
-        product: newProduct,
-        storeId: store.id,
-        timestamp: Date.now()
-      }, '*');
-
-      // Also trigger storage event for same-origin tabs
-      localStorage.setItem('product_creation_sync', JSON.stringify({
-        product: newProduct,
-        storeId: store.id,
-        timestamp: Date.now()
-      }));
 
       toast({
         title: 'تم إنشاء المنتج بنجاح! 🎉',
@@ -234,7 +253,7 @@ export default function AddProduct() {
       console.error('Error creating product:', error);
       toast({
         title: 'خطأ في إنشاء المنتج',
-        description: 'حدث خطأ أثناء إنشاء المنتج، يرجى المحاولة مرة أخرى',
+        description: 'حدث خطأ أثناء إنشاء المنتج، ير��ى المحاولة مرة أخرى',
         variant: 'destructive'
       });
     } finally {

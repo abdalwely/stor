@@ -3,7 +3,7 @@ import { User } from 'firebase/auth';
 import { onAuthStateChange, getUserData, UserData } from '@/lib/auth';
 import { getCurrentFallbackUser } from '@/lib/fallback-auth';
 import { onAuthStateChangeDev } from '@/lib/auth-dev';
-import { getStoreByOwnerId, updateStore } from '@/lib/store-management';
+import { storeService } from '@/lib/firestore';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -132,15 +132,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
               // إذا كان تاجراً وتم تحديث اسمه، حدث اسم المتجر أيضاً
               if (userType === 'merchant' && firstName && firstName !== 'تاجر') {
-                setTimeout(() => {
+                setTimeout(async () => {
                   try {
-                    const merchantStore = getStoreByOwnerId(user.uid);
+                    const stores = await storeService.getByOwner(user.uid);
+                    const merchantStore = stores.length > 0 ? stores[0] : null;
 
                     if (merchantStore) {
                       const expectedStoreName = `متجر ${firstName}`;
                       if (merchantStore.name !== expectedStoreName) {
                         console.log('🔧 Auto-updating store name for merchant:', firstName);
-                        updateStore(merchantStore.id, {
+                        await storeService.update(merchantStore.id, {
                           name: expectedStoreName,
                           description: `متجر ${firstName} للتجارة الإلكترونية`
                         });

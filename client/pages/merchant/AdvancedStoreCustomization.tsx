@@ -11,11 +11,10 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { 
-  getStoreByOwnerId, 
-  updateStore, 
-  Store 
-} from '@/lib/store-management';
+import {
+  storeService,
+  Store
+} from '@/lib/firestore';
 import {
   Palette,
   Type,
@@ -37,7 +36,7 @@ const colorPresets = [
   { name: 'الأخضر الطبيعي', primary: '#16a34a', secondary: '#6b7280', accent: '#22c55e' },
   { name: 'البرتقالي النشط', primary: '#ea580c', secondary: '#71717a', accent: '#fb923c' },
   { name: 'البنفسجي العصري', primary: '#7c3aed', secondary: '#6b7280', accent: '#a855f7' },
-  { name: 'الوردي الأنيق', primary: '#ec4899', secondary: '#64748b', accent: '#f472b6' },
+  { name: 'الوردي ا��أنيق', primary: '#ec4899', secondary: '#64748b', accent: '#f472b6' },
   { name: 'الذهبي الفاخر', primary: '#d97706', secondary: '#78716c', accent: '#f59e0b' }
 ];
 
@@ -135,8 +134,9 @@ export default function AdvancedStoreCustomization() {
     if (!userData) return;
 
     try {
-      const storeData = getStoreByOwnerId(userData.uid);
-      if (storeData) {
+      const stores = await storeService.getByOwner(userData.uid);
+      if (stores.length > 0) {
+        const storeData = stores[0];
         setStore(storeData);
 
         // Ensure customization has all required properties with defaults
@@ -230,39 +230,23 @@ export default function AdvancedStoreCustomization() {
 
     setSaving(true);
     try {
-      const updatedStore = updateStore(store.id, {
+      await storeService.update(store.id, {
         customization: customization
       });
 
-      if (updatedStore) {
-        setStore(updatedStore);
+      // تحديث الحالة المحلية
+      setStore(prev => prev ? { ...prev, customization } : null);
 
-        // Force reload of store data across all tabs/windows
-        window.postMessage({
-          type: 'STORE_CUSTOMIZATION_UPDATED',
-          storeId: store.id,
-          customization: customization,
-          timestamp: Date.now()
-        }, '*');
-
-        // Also trigger storage event for same-origin tabs
-        localStorage.setItem('store_customization_sync', JSON.stringify({
-          storeId: store.id,
-          customization: customization,
-          timestamp: Date.now()
-        }));
-
-        toast({
-          title: 'تم حفظ التخصيصات بنجاح! 🎉',
-          description: 'تم تطبيق التغييرات على متجرك. قم بتحديث صفحة المتجر لرؤية التغييرات.',
-          action: {
-            label: 'افتح المتجر',
-            onClick: () => {
-              window.open(`/store/${store.subdomain}?_t=${Date.now()}`, '_blank');
-            }
+      toast({
+        title: 'تم حفظ التخصيصات بنجاح! 🎉',
+        description: 'تم تطبيق التغييرات على متجرك. قم بتحديث صفحة المتجر لرؤية التغييرات.',
+        action: {
+          label: 'افتح المتجر',
+          onClick: () => {
+            window.open(`/store/${store.subdomain}?_t=${Date.now()}`, '_blank');
           }
-        });
-      }
+        }
+      });
     } catch (error) {
       console.error('Error saving customization:', error);
       toast({
@@ -732,8 +716,8 @@ export default function AdvancedStoreCustomization() {
                   <CardContent className="space-y-6">
                     <div>
                       <Label>نمط الهيدر</Label>
-                      <Select 
-                        value={customization.layout?.headerStyle || 'modern'} 
+                      <Select
+                        value={customization.layout?.headerStyle || 'modern'}
                         onValueChange={(value: any) => setCustomization(prev => ({
                           ...prev,
                           layout: { ...prev.layout, headerStyle: value }
@@ -747,9 +731,126 @@ export default function AdvancedStoreCustomization() {
                           <SelectItem value="classic">كلاسيكي</SelectItem>
                           <SelectItem value="minimal">بسيط</SelectItem>
                           <SelectItem value="elegant">أنيق</SelectItem>
+                          <SelectItem value="transparent">شفاف</SelectItem>
+                          <SelectItem value="gradient">متدرج</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    {/* إعدادات إضافية للهيدر */}
+                    <Card className="border border-dashed border-gray-300">
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-sm font-medium text-gray-700">إعدادات الهيدر المتقدمة</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-xs">عرض الشعار</Label>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Switch
+                                checked={customization.layout?.showLogo !== false}
+                                onCheckedChange={(checked) => setCustomization(prev => ({
+                                  ...prev,
+                                  layout: { ...prev.layout, showLogo: checked }
+                                }))}
+                              />
+                              <span className="text-sm text-gray-600">
+                                {customization.layout?.showLogo !== false ? 'ظاهر' : 'مخفي'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">عرض البحث</Label>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Switch
+                                checked={customization.layout?.showSearch !== false}
+                                onCheckedChange={(checked) => setCustomization(prev => ({
+                                  ...prev,
+                                  layout: { ...prev.layout, showSearch: checked }
+                                }))}
+                              />
+                              <span className="text-sm text-gray-600">
+                                {customization.layout?.showSearch !== false ? 'ظاهر' : 'مخفي'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">عرض سلة التسوق</Label>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Switch
+                                checked={customization.layout?.showCartIcon !== false}
+                                onCheckedChange={(checked) => setCustomization(prev => ({
+                                  ...prev,
+                                  layout: { ...prev.layout, showCartIcon: checked }
+                                }))}
+                              />
+                              <span className="text-sm text-gray-600">
+                                {customization.layout?.showCartIcon !== false ? 'ظاهر' : 'مخفي'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <Label className="text-xs">عرض قائمة المستخدم</Label>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Switch
+                                checked={customization.layout?.showUserMenu !== false}
+                                onCheckedChange={(checked) => setCustomization(prev => ({
+                                  ...prev,
+                                  layout: { ...prev.layout, showUserMenu: checked }
+                                }))}
+                              />
+                              <span className="text-sm text-gray-600">
+                                {customization.layout?.showUserMenu !== false ? 'ظاهر' : 'مخفي'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">موضع الهيدر</Label>
+                          <Select
+                            value={customization.layout?.headerPosition || 'static'}
+                            onValueChange={(value: any) => setCustomization(prev => ({
+                              ...prev,
+                              layout: { ...prev.layout, headerPosition: value }
+                            }))}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="static">عادي</SelectItem>
+                              <SelectItem value="sticky">لاصق</SelectItem>
+                              <SelectItem value="fixed">ثابت</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label className="text-xs">ارتفاع الهيدر</Label>
+                          <Select
+                            value={customization.layout?.headerHeight || 'medium'}
+                            onValueChange={(value: any) => setCustomization(prev => ({
+                              ...prev,
+                              layout: { ...prev.layout, headerHeight: value }
+                            }))}
+                          >
+                            <SelectTrigger className="mt-1">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="small">صغير (60px)</SelectItem>
+                              <SelectItem value="medium">متوسط (80px)</SelectItem>
+                              <SelectItem value="large">كبير (100px)</SelectItem>
+                              <SelectItem value="xl">كبير جداً (120px)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </CardContent>
+                    </Card>
 
                     <div>
                       <Label>نمط الفوتر</Label>
