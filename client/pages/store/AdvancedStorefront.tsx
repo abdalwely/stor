@@ -432,7 +432,7 @@ function AdvancedStorefront() {
               <p><strong>خطوات الحل:</strong></p>
               <ol className="list-decimal list-inside space-y-1 mt-1">
                 <li>اذهب لصفحة التشخيص واضغط "إصلاح مشكلة التزامن"</li>
-                <li>تأكد من تسجيل دخول التاجر بشكل صحيح</li>
+                <li>تأكد من تسجيل دخول ��لتاجر بشكل صحيح</li>
                 <li>تحقق من وحدة التحكم (F12) لتفاصيل أكثر</li>
               </ol>
             </div>
@@ -2096,3 +2096,5 @@ const Footer = ({ store }: any) => (
     </div>
   </footer>
 );
+
+export default AdvancedStorefrontWithAuth;

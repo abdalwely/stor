@@ -39,10 +39,12 @@ import AdvancedStoreCustomization from "./pages/merchant/AdvancedStoreCustomizat
 import CustomerDashboard from "./pages/customer/Dashboard";
 import AdminDashboard from "./pages/admin/Dashboard";
 import EnhancedAdminDashboard from "./pages/admin/EnhancedDashboard";
+import ComprehensiveAdminDashboard from "./pages/admin/ComprehensiveAdminDashboard";
 
 // Store Frontend
 import WorkingStorefront from "./pages/store/WorkingStorefront";
 import AdvancedStorefront from "./pages/store/AdvancedStorefront";
+import EnhancedStoreFrontend from "./pages/store/EnhancedStoreFrontend";
 
 // Placeholder pages
 import PlaceholderPage from "./pages/PlaceholderPage";
@@ -194,7 +196,7 @@ const App = () => (
             {/* Admin Dashboard Routes */}
             <Route path="/admin/dashboard" element={
               <ProtectedRoute allowedRoles={['admin']}>
-                <EnhancedAdminDashboard />
+                <ComprehensiveAdminDashboard />
               </ProtectedRoute>
             } />
             <Route path="/admin/merchants" element={
@@ -239,7 +241,8 @@ const App = () => (
             } />
             
             {/* Store Pages (Public store fronts) */}
-            <Route path="/store/:subdomain" element={<AdvancedStorefront />} />
+            <Route path="/store/:subdomain" element={<EnhancedStoreFrontend />} />
+            <Route path="/store-advanced/:subdomain" element={<AdvancedStorefront />} />
             <Route path="/store-basic/:subdomain" element={<WorkingStorefront />} />
             
             {/* Marketplace Pages */}

@@ -82,102 +82,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
-    // Check if Firebase is disabled (development mode)
-    const isFirebaseDisabled = process.env.NODE_ENV === 'development' ||
-                              (typeof window !== 'undefined' && (window as any).__FIREBASE_DISABLED__);
+    console.log('🔥 Initializing Firebase Authentication');
 
-    if (isFirebaseDisabled) {
-      console.log('🔧 Using development auth (Firebase disabled)');
-
-      // Use development auth system
-      const unsubscribe = onAuthStateChangeDev((user) => {
-        setCurrentUser(user);
-        setIsOfflineMode(true);
-
-        if (user) {
-          // Get stored user data from localStorage to determine user type
-          const stored = localStorage.getItem('fallback_user');
-          let userType = 'admin';
-          let firstName = 'مدير';
-          let lastName = 'المنصة';
-
-          if (stored) {
-            try {
-              const userData = JSON.parse(stored);
-              userType = userData.userType || 'admin';
-
-              // Use stored names if available, otherwise use defaults
-              if (userData.firstName) {
-                firstName = userData.firstName;
-              } else if (userType === 'merchant') {
-                firstName = 'تاجر';
-              } else if (userType === 'customer') {
-                firstName = 'عميل';
-              }
-
-              if (userData.lastName) {
-                lastName = userData.lastName;
-              } else if (userType === 'merchant') {
-                lastName = 'تجريبي';
-              } else if (userType === 'customer') {
-                lastName = 'تجريبي';
-              }
-
-              console.log('📋 Loaded user data from localStorage:', {
-                email: user.email,
-                userType: userType,
-                firstName: firstName,
-                lastName: lastName
-              });
-
-              // إذا كان تاجراً وتم تحديث اسمه، حدث اسم المتجر أيضاً
-              if (userType === 'merchant' && firstName && firstName !== 'تاجر') {
-                setTimeout(async () => {
-                  try {
-                    const stores = await storeService.getByOwner(user.uid);
-                    const merchantStore = stores.length > 0 ? stores[0] : null;
-
-                    if (merchantStore) {
-                      const expectedStoreName = `متجر ${firstName}`;
-                      if (merchantStore.name !== expectedStoreName) {
-                        console.log('🔧 Auto-updating store name for merchant:', firstName);
-                        await storeService.update(merchantStore.id, {
-                          name: expectedStoreName,
-                          description: `متجر ${firstName} للتجارة الإلكترونية`
-                        });
-                        console.log('✅ Store name auto-updated');
-                      }
-                    }
-                  } catch (error) {
-                    console.error('Error auto-updating store name:', error);
-                  }
-                }, 1000); // تأخير صغير للتأكد من تحميل البيانات
-              }
-            } catch (error) {
-              console.warn('Error parsing stored user data:', error);
-            }
-          }
-
-          setUserData({
-            uid: user.uid,
-            email: user.email,
-            firstName: firstName,
-            lastName: lastName,
-            userType: userType as 'admin' | 'merchant' | 'customer',
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            isActive: true
-          });
-        } else {
-          setUserData(null);
-        }
-        setLoading(false);
-      });
-
-      return unsubscribe;
-    }
-
-    // Production Firebase auth
     try {
       const unsubscribe = onAuthStateChange(async (user) => {
         setCurrentUser(user);
@@ -185,8 +91,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
         if (user) {
           try {
+            console.log('👤 Loading user data for:', user.email);
             const data = await getUserData(user.uid);
-            setUserData(data);
+
+            if (data) {
+              setUserData(data);
+              console.log('✅ User data loaded:', { email: data.email, userType: data.userType });
+            } else {
+              console.log('⚠️ No user data found, creating default data');
+              // Create default user data if not found
+              const defaultUserData = {
+                uid: user.uid,
+                email: user.email || '',
+                firstName: 'مستخدم',
+                lastName: 'جديد',
+                userType: 'customer' as 'admin' | 'merchant' | 'customer',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                isActive: true
+              };
+              setUserData(defaultUserData);
+            }
           } catch (error) {
             console.warn('⚠️ Failed to get user data:', error);
             setUserData({

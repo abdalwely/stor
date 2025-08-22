@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -28,101 +29,246 @@ import {
   Smartphone,
   Monitor,
   Tablet,
-  ArrowLeft
+  ArrowLeft,
+  Plus,
+  X,
+  Upload,
+  Settings,
+  ShoppingBag,
+  Search,
+  User,
+  Menu,
+  Heart,
+  Star,
+  Phone,
+  Mail,
+  MapPin,
+  Globe,
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube
 } from 'lucide-react';
 
 const colorPresets = [
-  { name: 'الأزرق الكلاسيكي', primary: '#2563eb', secondary: '#64748b', accent: '#3b82f6' },
-  { name: 'الأخضر الطبيعي', primary: '#16a34a', secondary: '#6b7280', accent: '#22c55e' },
-  { name: 'البرتقالي النشط', primary: '#ea580c', secondary: '#71717a', accent: '#fb923c' },
-  { name: 'البنفسجي العصري', primary: '#7c3aed', secondary: '#6b7280', accent: '#a855f7' },
-  { name: 'الوردي ا��أنيق', primary: '#ec4899', secondary: '#64748b', accent: '#f472b6' },
-  { name: 'الذهبي الفاخر', primary: '#d97706', secondary: '#78716c', accent: '#f59e0b' }
+  { name: 'الأزرق الكلاسيكي', primary: '#2563eb', secondary: '#64748b', accent: '#3b82f6', background: '#ffffff', text: '#1e293b' },
+  { name: 'الأخضر الطبيعي', primary: '#16a34a', secondary: '#6b7280', accent: '#22c55e', background: '#ffffff', text: '#1e293b' },
+  { name: 'البرتقالي النشط', primary: '#ea580c', secondary: '#71717a', accent: '#fb923c', background: '#ffffff', text: '#1e293b' },
+  { name: 'البنفسجي العصري', primary: '#7c3aed', secondary: '#6b7280', accent: '#a855f7', background: '#ffffff', text: '#1e293b' },
+  { name: 'الوردي الأنيق', primary: '#ec4899', secondary: '#64748b', accent: '#f472b6', background: '#ffffff', text: '#1e293b' },
+  { name: 'الذهبي الفاخر', primary: '#d97706', secondary: '#78716c', accent: '#f59e0b', background: '#ffffff', text: '#1e293b' },
+  { name: 'الأسود الأنيق', primary: '#000000', secondary: '#374151', accent: '#4b5563', background: '#ffffff', text: '#1e293b' },
+  { name: 'الداكن الحديث', primary: '#ffffff', secondary: '#9ca3af', accent: '#60a5fa', background: '#1f2937', text: '#ffffff' }
 ];
 
 const fontOptions = [
-  { name: 'Cairo', value: 'Cairo', preview: 'Cairo - خط عربي حديث' },
-  { name: 'Amiri', value: 'Amiri', preview: 'Amiri - خط عربي تقليدي' },
-  { name: 'Noto Sans Arabic', value: 'Noto Sans Arabic', preview: 'Noto Sans Arabic - خط واضح' },
-  { name: 'Tajawal', value: 'Tajawal', preview: 'Tajawal - خط عصري' },
-  { name: 'Almarai', value: 'Almarai', preview: 'Almarai - خط بسيط' }
+  { name: 'Cairo', value: 'Cairo', preview: 'Cairo - خط عربي حديث وواضح' },
+  { name: 'Amiri', value: 'Amiri', preview: 'Amiri - خط عربي تقليدي أنيق' },
+  { name: 'Noto Sans Arabic', value: 'Noto Sans Arabic', preview: 'Noto Sans Arabic - خط واضح للقراءة' },
+  { name: 'Tajawal', value: 'Tajawal', preview: 'Tajawal - خط عصري ومتوازن' },
+  { name: 'Almarai', value: 'Almarai', preview: 'Almarai - خط بسيط وأنيق' },
+  { name: 'IBM Plex Sans Arabic', value: 'IBM Plex Sans Arabic', preview: 'IBM Plex - خط تقني احترافي' }
+];
+
+const headerLayouts = [
+  { id: 'modern', name: 'عصري', description: 'تصميم بسيط ونظيف' },
+  { id: 'classic', name: 'كلاسيكي', description: 'تصميم تقليدي وأنيق' },
+  { id: 'minimal', name: 'مينيمال', description: 'تصم��م بسيط جداً' },
+  { id: 'bold', name: 'جريء', description: 'تصميم قوي وبارز' },
+  { id: 'elegant', name: 'أنيق', description: 'تصميم راقي ومتطور' }
+];
+
+const socialPlatforms = [
+  { id: 'facebook', name: 'فيسبوك', icon: Facebook, placeholder: 'https://facebook.com/your-page' },
+  { id: 'twitter', name: 'تويتر', icon: Twitter, placeholder: 'https://twitter.com/your-handle' },
+  { id: 'instagram', name: 'انستغرام', icon: Instagram, placeholder: 'https://instagram.com/your-profile' },
+  { id: 'youtube', name: 'يوتيوب', icon: Youtube, placeholder: 'https://youtube.com/your-channel' }
 ];
 
 export default function AdvancedStoreCustomization() {
+  const { userData } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { userData } = useAuth();
   
   const [store, setStore] = useState<Store | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [previewMode, setPreviewMode] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [previewDevice, setPreviewDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [activeTab, setActiveTab] = useState('colors');
   
-  const [customization, setCustomization] = useState({
-    colors: {
-      primary: '#2563eb',
-      secondary: '#64748b',
-      background: '#ffffff',
-      text: '#1e293b',
-      accent: '#3b82f6',
-      headerBackground: '#ffffff',
-      footerBackground: '#f8fafc',
-      cardBackground: '#ffffff',
-      borderColor: '#e5e7eb'
-    },
-    fonts: {
-      heading: 'Cairo',
-      body: 'Cairo',
-      size: {
-        small: '14px',
-        medium: '16px',
-        large: '18px',
-        xlarge: '24px'
+  const [storeData, setStoreData] = useState({
+    name: '',
+    description: '',
+    customization: {
+      colors: {
+        primary: '#2563eb',
+        secondary: '#64748b',
+        background: '#ffffff',
+        text: '#1e293b',
+        accent: '#3b82f6',
+        success: '#16a34a',
+        warning: '#f59e0b',
+        error: '#dc2626',
+        muted: '#f8fafc',
+        border: '#e2e8f0',
+        headerBackground: '#ffffff',
+        footerBackground: '#1e293b',
+        cardBackground: '#ffffff',
+        buttonPrimary: '#2563eb',
+        buttonSecondary: '#6b7280'
+      },
+      fonts: {
+        primary: 'Cairo',
+        secondary: 'Inter',
+        sizes: {
+          xs: '0.75rem',
+          sm: '0.875rem',
+          base: '1rem',
+          lg: '1.125rem',
+          xl: '1.25rem',
+          '2xl': '1.5rem',
+          '3xl': '1.875rem',
+          '4xl': '2.25rem'
+        },
+        weights: {
+          light: '300',
+          normal: '400',
+          medium: '500',
+          semibold: '600',
+          bold: '700'
+        }
+      },
+      header: {
+        layout: 'modern',
+        showLogo: true,
+        showSearch: true,
+        showCart: true,
+        showAccount: true,
+        showLanguage: false,
+        showSocial: false,
+        sticky: true,
+        transparent: false,
+        showCategories: true,
+        showPhone: true,
+        showEmail: false,
+        logoPosition: 'right',
+        menuStyle: 'horizontal',
+        height: 'normal',
+        topBar: {
+          enabled: true,
+          showDeliveryInfo: true,
+          showPhone: true,
+          showEmail: false,
+          showSocial: true,
+          backgroundColor: '#f8fafc',
+          textColor: '#64748b'
+        }
+      },
+      footer: {
+        layout: 'detailed',
+        showLogo: true,
+        showSocial: true,
+        showPaymentMethods: true,
+        showCopyright: true,
+        showLinks: true,
+        showNewsletter: true,
+        showContact: true,
+        backgroundColor: '#1e293b',
+        textColor: '#ffffff',
+        columns: 4,
+        customSections: []
+      },
+      homepage: {
+        showHeroSlider: true,
+        showFeaturedProducts: true,
+        showCategories: true,
+        showNewsletter: true,
+        showTestimonials: true,
+        showStats: true,
+        showBrands: false,
+        showBlog: false,
+        heroStyle: 'slider',
+        heroTexts: [
+          { 
+            title: 'مرحباً بكم في متجرنا', 
+            subtitle: 'أفضل المنتجات بأسعار مميزة', 
+            buttonText: 'تسوق الآن',
+            buttonLink: '/products',
+            image: ''
+          }
+        ],
+        sectionsOrder: ['hero', 'categories', 'featured', 'stats', 'testimonials', 'newsletter']
+      },
+      product: {
+        cardStyle: 'modern',
+        showRating: true,
+        showReviews: true,
+        showSalesBadge: true,
+        showWishlist: true,
+        showQuickView: true,
+        showCompare: false,
+        gridColumns: {
+          desktop: 4,
+          tablet: 3,
+          mobile: 2
+        },
+        hoverEffect: 'lift',
+        imageAspectRatio: 'square'
+      },
+      layout: {
+        containerWidth: 'wide',
+        borderRadius: 'medium',
+        spacing: 'normal',
+        shadows: true,
+        animations: true,
+        transitions: true
+      },
+      social: {
+        facebook: '',
+        twitter: '',
+        instagram: '',
+        youtube: '',
+        linkedin: '',
+        snapchat: '',
+        tiktok: '',
+        whatsapp: ''
+      },
+      seo: {
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogImage: '',
+        structuredData: true,
+        sitemap: true,
+        robotsTxt: true
+      },
+      tracking: {
+        googleAnalytics: '',
+        facebookPixel: '',
+        snapchatPixel: '',
+        tiktokPixel: '',
+        hotjar: '',
+        customCode: ''
       }
     },
-    layout: {
-      headerStyle: 'modern' as const,
-      footerStyle: 'detailed' as const,
-      productGridColumns: 4,
-      containerWidth: 'normal' as const,
-      borderRadius: 'medium' as const,
-      spacing: 'normal' as const
-    },
-    homepage: {
-      showHeroSlider: true,
-      showFeaturedProducts: true,
-      showCategories: true,
-      showNewsletter: true,
-      showTestimonials: false,
-      showStats: true,
-      showBrands: false,
-      heroImages: [],
-      heroTexts: [
-        { title: 'مرحباً بكم في متجرنا', subtitle: 'أفضل المنتجات بأسعار مميزة', buttonText: 'تسوق الآن' }
-      ],
-      sectionsOrder: ['hero', 'categories', 'featured', 'stats']
-    },
-    pages: {
-      enableBlog: false,
-      enableReviews: true,
-      enableWishlist: true,
-      enableCompare: false,
-      enableLiveChat: false,
-      enableFAQ: true,
-      enableAboutUs: true,
-      enableContactUs: true
-    },
-    branding: {
-      logo: '',
-      favicon: '',
-      watermark: '',
-      showPoweredBy: true
-    },
-    effects: {
-      animations: true,
-      transitions: true,
-      shadows: true,
-      gradients: true
+    contact: {
+      phone: '',
+      email: '',
+      address: '',
+      city: '',
+      website: '',
+      workingHours: {
+        enabled: false,
+        schedule: [
+          { day: 'sunday', open: '09:00', close: '18:00', closed: false },
+          { day: 'monday', open: '09:00', close: '18:00', closed: false },
+          { day: 'tuesday', open: '09:00', close: '18:00', closed: false },
+          { day: 'wednesday', open: '09:00', close: '18:00', closed: false },
+          { day: 'thursday', open: '09:00', close: '18:00', closed: false },
+          { day: 'friday', open: '14:00', close: '18:00', closed: false },
+          { day: 'saturday', open: '09:00', close: '18:00', closed: true }
+        ]
+      }
     }
   });
 
@@ -131,95 +277,72 @@ export default function AdvancedStoreCustomization() {
   }, [userData]);
 
   const loadStoreData = async () => {
-    if (!userData) return;
+    if (!userData?.uid) return;
 
     try {
+      setLoading(true);
+      console.log('📝 Loading store data for user:', userData.uid);
+
       const stores = await storeService.getByOwner(userData.uid);
       if (stores.length > 0) {
         const storeData = stores[0];
         setStore(storeData);
-
-        // Ensure customization has all required properties with defaults
-        const safeCustomization = {
-          colors: {
-            primary: '#2563eb',
-            secondary: '#64748b',
-            background: '#ffffff',
-            text: '#1e293b',
-            accent: '#3b82f6',
-            headerBackground: '#ffffff',
-            footerBackground: '#f8fafc',
-            cardBackground: '#ffffff',
-            borderColor: '#e5e7eb',
-            ...storeData.customization?.colors
-          },
-          fonts: {
-            heading: 'Cairo',
-            body: 'Cairo',
-            size: {
-              small: '14px',
-              medium: '16px',
-              large: '18px',
-              xlarge: '24px',
-              ...storeData.customization?.fonts?.size
+        
+        // تحديث بيانات التخصيص
+        setStoreData(prev => ({
+          ...prev,
+          name: storeData.name || '',
+          description: storeData.description || '',
+          customization: {
+            ...prev.customization,
+            ...storeData.customization,
+            colors: {
+              ...prev.customization.colors,
+              ...storeData.customization?.colors
             },
-            ...storeData.customization?.fonts
+            fonts: {
+              ...prev.customization.fonts,
+              ...storeData.customization?.fonts
+            },
+            header: {
+              ...prev.customization.header,
+              ...storeData.customization?.header
+            },
+            footer: {
+              ...prev.customization.footer,
+              ...storeData.customization?.footer
+            },
+            homepage: {
+              ...prev.customization.homepage,
+              ...storeData.customization?.homepage
+            },
+            social: {
+              ...prev.customization.social,
+              ...storeData.customization?.social
+            }
           },
-          layout: {
-            headerStyle: 'modern' as const,
-            footerStyle: 'detailed' as const,
-            productGridColumns: 4,
-            containerWidth: 'normal' as const,
-            borderRadius: 'medium' as const,
-            spacing: 'normal' as const,
-            ...storeData.customization?.layout
-          },
-          homepage: {
-            showHeroSlider: true,
-            showFeaturedProducts: true,
-            showCategories: true,
-            showNewsletter: true,
-            showTestimonials: false,
-            showStats: true,
-            showBrands: false,
-            heroImages: [],
-            heroTexts: [
-              { title: 'مرحباً بكم في متجرنا', subtitle: 'أفضل المنتجات بأسعار مميزة', buttonText: 'تسوق ال��ن' }
-            ],
-            sectionsOrder: ['hero', 'categories', 'featured', 'stats'],
-            ...storeData.customization?.homepage
-          },
-          pages: {
-            enableBlog: false,
-            enableReviews: true,
-            enableWishlist: true,
-            enableCompare: false,
-            enableLiveChat: false,
-            enableFAQ: true,
-            enableAboutUs: true,
-            enableContactUs: true,
-            ...storeData.customization?.pages
-          },
-          branding: {
-            logo: '',
-            favicon: '',
-            watermark: '',
-            showPoweredBy: true,
-            ...storeData.customization?.branding
-          },
-          effects: {
-            animations: true,
-            transitions: true,
-            shadows: true,
-            gradients: true,
-            ...storeData.customization?.effects
+          contact: {
+            ...prev.contact,
+            ...storeData.contact
           }
-        };
+        }));
 
-        setCustomization(safeCustomization);
+        console.log('✅ Store data loaded successfully');
+      } else {
+        console.log('⚠️ No store found for user');
+        toast({
+          title: 'تحذير',
+          description: 'لا يوجد متجر مرتبط بحسابك',
+          variant: 'destructive'
+        });
       }
     } catch (error) {
-      console.error('Error loading store:', error);
+      console.error('❌ Error loading store data:', error);
+      toast({
+        title: 'خطأ',
+        description: 'فشل في تحميل بيانات المتجر',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
@@ -228,30 +351,30 @@ export default function AdvancedStoreCustomization() {
   const handleSave = async () => {
     if (!store) return;
 
-    setSaving(true);
     try {
+      setSaving(true);
+      console.log('💾 Saving store customization...');
+
       await storeService.update(store.id, {
-        customization: customization
+        name: storeData.name,
+        description: storeData.description,
+        customization: storeData.customization,
+        contact: storeData.contact,
+        updatedAt: new Date()
       });
-
-      // تحديث الحالة المحلية
-      setStore(prev => prev ? { ...prev, customization } : null);
 
       toast({
-        title: 'تم حفظ التخصيصات بنجاح! 🎉',
-        description: 'تم تطبيق التغييرات على متجرك. قم بتحديث صفحة المتجر لرؤية التغييرات.',
-        action: {
-          label: 'افتح المتجر',
-          onClick: () => {
-            window.open(`/store/${store.subdomain}?_t=${Date.now()}`, '_blank');
-          }
-        }
+        title: 'تم الحفظ',
+        description: 'تم حفظ تخصيصات المتجر بنجاح ✨',
+        variant: 'default'
       });
+
+      console.log('✅ Store customization saved successfully');
     } catch (error) {
-      console.error('Error saving customization:', error);
+      console.error('❌ Error saving store customization:', error);
       toast({
-        title: 'خطأ في الحفظ',
-        description: 'حدث خطأ أثناء حفظ التخصيصات',
+        title: 'خطأ',
+        description: 'فشل في حفظ التخصيصات',
         variant: 'destructive'
       });
     } finally {
@@ -260,432 +383,387 @@ export default function AdvancedStoreCustomization() {
   };
 
   const applyColorPreset = (preset: typeof colorPresets[0]) => {
-    setCustomization(prev => ({
+    setStoreData(prev => ({
       ...prev,
-      colors: {
-        ...prev.colors,
-        primary: preset.primary,
-        secondary: preset.secondary,
-        accent: preset.accent
+      customization: {
+        ...prev.customization,
+        colors: {
+          ...prev.customization.colors,
+          primary: preset.primary,
+          secondary: preset.secondary,
+          accent: preset.accent,
+          background: preset.background,
+          text: preset.text,
+          buttonPrimary: preset.primary,
+          headerBackground: preset.background,
+          cardBackground: preset.background
+        }
       }
     }));
   };
 
-  const resetToDefaults = () => {
-    setCustomization({
-      colors: {
-        primary: '#2563eb',
-        secondary: '#64748b',
-        background: '#ffffff',
-        text: '#1e293b',
-        accent: '#3b82f6',
-        headerBackground: '#ffffff',
-        footerBackground: '#f8fafc',
-        cardBackground: '#ffffff',
-        borderColor: '#e5e7eb'
-      },
-      fonts: {
-        heading: 'Cairo',
-        body: 'Cairo',
-        size: {
-          small: '14px',
-          medium: '16px',
-          large: '18px',
-          xlarge: '24px'
+  const addHeroSlide = () => {
+    setStoreData(prev => ({
+      ...prev,
+      customization: {
+        ...prev.customization,
+        homepage: {
+          ...prev.customization.homepage,
+          heroTexts: [
+            ...prev.customization.homepage.heroTexts,
+            {
+              title: 'شريحة جديدة',
+              subtitle: 'وصف الشريحة',
+              buttonText: 'اقرأ المزيد',
+              buttonLink: '',
+              image: ''
+            }
+          ]
         }
-      },
-      layout: {
-        headerStyle: 'modern',
-        footerStyle: 'detailed',
-        productGridColumns: 4,
-        containerWidth: 'normal',
-        borderRadius: 'medium',
-        spacing: 'normal'
-      },
-      homepage: {
-        showHeroSlider: true,
-        showFeaturedProducts: true,
-        showCategories: true,
-        showNewsletter: true,
-        showTestimonials: false,
-        showStats: true,
-        showBrands: false,
-        heroImages: [],
-        heroTexts: [
-          { title: 'مرحباً بكم في متجرنا', subtitle: 'أفضل المنتجات بأسعار مميزة', buttonText: 'تسوق الآن' }
-        ],
-        sectionsOrder: ['hero', 'categories', 'featured', 'stats']
-      },
-      pages: {
-        enableBlog: false,
-        enableReviews: true,
-        enableWishlist: true,
-        enableCompare: false,
-        enableLiveChat: false,
-        enableFAQ: true,
-        enableAboutUs: true,
-        enableContactUs: true
-      },
-      branding: {
-        logo: '',
-        favicon: '',
-        watermark: '',
-        showPoweredBy: true
-      },
-      effects: {
-        animations: true,
-        transitions: true,
-        shadows: true,
-        gradients: true
       }
-    });
+    }));
+  };
+
+  const removeHeroSlide = (index: number) => {
+    setStoreData(prev => ({
+      ...prev,
+      customization: {
+        ...prev.customization,
+        homepage: {
+          ...prev.customization.homepage,
+          heroTexts: prev.customization.homepage.heroTexts.filter((_, i) => i !== index)
+        }
+      }
+    }));
+  };
+
+  const updateHeroSlide = (index: number, field: string, value: string) => {
+    setStoreData(prev => ({
+      ...prev,
+      customization: {
+        ...prev.customization,
+        homepage: {
+          ...prev.customization.homepage,
+          heroTexts: prev.customization.homepage.heroTexts.map((slide, i) => 
+            i === index ? { ...slide, [field]: value } : slide
+          )
+        }
+      }
+    }));
+  };
+
+  const openStorePreview = () => {
+    if (store) {
+      const previewUrl = `/store/${store.subdomain}`;
+      window.open(previewUrl, '_blank');
+    }
   };
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!store) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">لم يتم العثور على متجر</h1>
-          <Button onClick={() => navigate('/merchant/dashboard')}>
-            العودة للوحة التحكم
-          </Button>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">جاري تحميل إعدادات التخصيص...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" dir="rtl">
+    <div className="min-h-screen bg-gray-50 p-6" dir="rtl">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate('/merchant/dashboard')}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                العودة
-              </Button>
-              <div>
-                <h1 className="text-2xl font-bold">تخصيص المتجر</h1>
-                <p className="text-gray-600">{store.name}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              {/* Preview Mode Toggle */}
-              <div className="flex border rounded-lg">
-                <Button
-                  variant={previewMode === 'desktop' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setPreviewMode('desktop')}
-                  className="rounded-r-none"
-                >
-                  <Monitor className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={previewMode === 'tablet' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setPreviewMode('tablet')}
-                  className="rounded-none"
-                >
-                  <Tablet className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={previewMode === 'mobile' ? 'default' : 'ghost'}
-                  size="sm"
-                  onClick={() => setPreviewMode('mobile')}
-                  className="rounded-l-none"
-                >
-                  <Smartphone className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <Button 
-                variant="outline"
-                onClick={() => window.open(`/store/${store.subdomain}?preview=true`, '_blank')}
-              >
-                <Eye className="h-4 w-4 mr-2" />
-                معاينة
-              </Button>
-              
-              <Button onClick={handleSave} disabled={saving}>
-                {saving ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                ) : (
-                  <Save className="h-4 w-4 mr-2" />
-                )}
-                حفظ التغييرات
-              </Button>
-            </div>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <Button
+            onClick={() => navigate('/merchant/dashboard')}
+            variant="outline"
+            size="sm"
+          >
+            <ArrowLeft className="h-4 w-4 ml-2" />
+            العودة للوحة التحكم
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">تخصيص المتجر المتقدم</h1>
+            <p className="text-gray-600 mt-1">خصص مظهر وتخطيط متجرك بالكامل</p>
           </div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 bg-white rounded-lg p-1 border">
+            <Button
+              size="sm"
+              variant={previewDevice === 'desktop' ? 'default' : 'ghost'}
+              onClick={() => setPreviewDevice('desktop')}
+            >
+              <Monitor className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant={previewDevice === 'tablet' ? 'default' : 'ghost'}
+              onClick={() => setPreviewDevice('tablet')}
+            >
+              <Tablet className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant={previewDevice === 'mobile' ? 'default' : 'ghost'}
+              onClick={() => setPreviewDevice('mobile')}
+            >
+              <Smartphone className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          <Button onClick={openStorePreview} variant="outline">
+            <Eye className="h-4 w-4 mr-2" />
+            معاينة المتجر
+          </Button>
+          
+          <Button onClick={handleSave} disabled={saving}>
+            {saving ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                جاري الحفظ...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                حفظ التغييرات
+              </>
+            )}
+          </Button>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Customization Panel */}
-          <div className="lg:col-span-1">
-            <Tabs defaultValue="colors" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="colors">
-                  <Palette className="h-4 w-4" />
-                </TabsTrigger>
-                <TabsTrigger value="fonts">
-                  <Type className="h-4 w-4" />
-                </TabsTrigger>
-                <TabsTrigger value="layout">
-                  <Layout className="h-4 w-4" />
-                </TabsTrigger>
-                <TabsTrigger value="pages">
-                  <Home className="h-4 w-4" />
-                </TabsTrigger>
-              </TabsList>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Settings Panel */}
+        <div className="lg:col-span-1">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="h-5 w-5" />
+                إعدادات التخصيص
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="colors">الألوان</TabsTrigger>
+                  <TabsTrigger value="layout">التخطيط</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="colors" className="space-y-6 mt-6">
+                  {/* Color Presets */}
+                  <div>
+                    <Label className="text-sm font-medium">القوالب الجاهزة</Label>
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {colorPresets.map((preset, index) => (
+                        <div
+                          key={index}
+                          className="p-3 rounded-lg border cursor-pointer hover:border-primary transition-colors"
+                          onClick={() => applyColorPreset(preset)}
+                        >
+                          <div className="flex gap-1 mb-2">
+                            <div 
+                              className="w-4 h-4 rounded-full border"
+                              style={{ backgroundColor: preset.primary }}
+                            />
+                            <div 
+                              className="w-4 h-4 rounded-full border"
+                              style={{ backgroundColor: preset.secondary }}
+                            />
+                            <div 
+                              className="w-4 h-4 rounded-full border"
+                              style={{ backgroundColor: preset.accent }}
+                            />
+                          </div>
+                          <p className="text-xs font-medium">{preset.name}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Colors Tab */}
-              <TabsContent value="colors">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Palette className="h-5 w-5" />
-                      ال��لوان
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Color Presets */}
-                    <div>
-                      <Label className="text-sm font-medium mb-3 block">قوالب الألوان</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {colorPresets.map((preset, index) => (
-                          <Button
-                            key={index}
-                            variant="outline"
-                            className="h-auto p-3 flex flex-col items-start"
-                            onClick={() => applyColorPreset(preset)}
-                          >
-                            <div className="flex gap-1 mb-2">
-                              <div 
-                                className="w-4 h-4 rounded-full"
-                                style={{ backgroundColor: preset.primary }}
-                              ></div>
-                              <div 
-                                className="w-4 h-4 rounded-full"
-                                style={{ backgroundColor: preset.secondary }}
-                              ></div>
-                              <div 
-                                className="w-4 h-4 rounded-full"
-                                style={{ backgroundColor: preset.accent }}
-                              ></div>
-                            </div>
-                            <span className="text-xs">{preset.name}</span>
-                          </Button>
-                        ))}
+                  <Separator />
+
+                  {/* Custom Colors */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">الألوان المخصصة</Label>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="primary-color" className="text-xs">اللون الأساسي</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            id="primary-color"
+                            type="color"
+                            value={storeData.customization.colors.primary}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  primary: e.target.value,
+                                  buttonPrimary: e.target.value
+                                }
+                              }
+                            }))}
+                            className="w-12 h-8 p-1 rounded border"
+                          />
+                          <Input
+                            type="text"
+                            value={storeData.customization.colors.primary}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  primary: e.target.value,
+                                  buttonPrimary: e.target.value
+                                }
+                              }
+                            }))}
+                            className="flex-1 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="secondary-color" className="text-xs">اللون الثانوي</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            id="secondary-color"
+                            type="color"
+                            value={storeData.customization.colors.secondary}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  secondary: e.target.value
+                                }
+                              }
+                            }))}
+                            className="w-12 h-8 p-1 rounded border"
+                          />
+                          <Input
+                            type="text"
+                            value={storeData.customization.colors.secondary}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  secondary: e.target.value
+                                }
+                              }
+                            }))}
+                            className="flex-1 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="background-color" className="text-xs">لون الخلفية</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            id="background-color"
+                            type="color"
+                            value={storeData.customization.colors.background}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  background: e.target.value,
+                                  headerBackground: e.target.value,
+                                  cardBackground: e.target.value
+                                }
+                              }
+                            }))}
+                            className="w-12 h-8 p-1 rounded border"
+                          />
+                          <Input
+                            type="text"
+                            value={storeData.customization.colors.background}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  background: e.target.value,
+                                  headerBackground: e.target.value,
+                                  cardBackground: e.target.value
+                                }
+                              }
+                            }))}
+                            className="flex-1 text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="text-color" className="text-xs">لون النص</Label>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Input
+                            id="text-color"
+                            type="color"
+                            value={storeData.customization.colors.text}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  text: e.target.value
+                                }
+                              }
+                            }))}
+                            className="w-12 h-8 p-1 rounded border"
+                          />
+                          <Input
+                            type="text"
+                            value={storeData.customization.colors.text}
+                            onChange={(e) => setStoreData(prev => ({
+                              ...prev,
+                              customization: {
+                                ...prev.customization,
+                                colors: {
+                                  ...prev.customization.colors,
+                                  text: e.target.value
+                                }
+                              }
+                            }))}
+                            className="flex-1 text-xs"
+                          />
+                        </div>
                       </div>
                     </div>
+                  </div>
 
-                    <Separator />
+                  <Separator />
 
-                    {/* Individual Colors */}
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="primary">اللون الأساسي</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            id="primary"
-                            type="color"
-                            value={customization.colors?.primary || '#2563eb'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, primary: e.target.value }
-                            }))}
-                            className="w-16 h-10 p-1"
-                          />
-                          <Input
-                            value={customization.colors?.primary || '#2563eb'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, primary: e.target.value }
-                            }))}
-                            className="flex-1"
-                            placeholder="#2563eb"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="secondary">اللون الثانوي</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            id="secondary"
-                            type="color"
-                            value={customization.colors?.secondary || '#64748b'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, secondary: e.target.value }
-                            }))}
-                            className="w-16 h-10 p-1"
-                          />
-                          <Input
-                            value={customization.colors?.secondary || '#64748b'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, secondary: e.target.value }
-                            }))}
-                            className="flex-1"
-                            placeholder="#64748b"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="accent">لون التمييز</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            id="accent"
-                            type="color"
-                            value={customization.colors?.accent || '#3b82f6'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, accent: e.target.value }
-                            }))}
-                            className="w-16 h-10 p-1"
-                          />
-                          <Input
-                            value={customization.colors?.accent || '#3b82f6'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, accent: e.target.value }
-                            }))}
-                            className="flex-1"
-                            placeholder="#3b82f6"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="background">لون الخلفية</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            id="background"
-                            type="color"
-                            value={customization.colors?.background || '#ffffff'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, background: e.target.value }
-                            }))}
-                            className="w-16 h-10 p-1"
-                          />
-                          <Input
-                            value={customization.colors?.background || '#ffffff'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, background: e.target.value }
-                            }))}
-                            className="flex-1"
-                            placeholder="#ffffff"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="text">لون النص</Label>
-                        <div className="flex gap-2 mt-1">
-                          <Input
-                            id="text"
-                            type="color"
-                            value={customization.colors?.text || '#1e293b'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, text: e.target.value }
-                            }))}
-                            className="w-16 h-10 p-1"
-                          />
-                          <Input
-                            value={customization.colors?.text || '#1e293b'}
-                            onChange={(e) => setCustomization(prev => ({
-                              ...prev,
-                              colors: { ...prev.colors, text: e.target.value }
-                            }))}
-                            className="flex-1"
-                            placeholder="#1e293b"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Fonts Tab */}
-              <TabsContent value="fonts">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Type className="h-5 w-5" />
-                      الخطوط
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
+                  {/* Fonts */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">الخطوط</Label>
+                    
                     <div>
-                      <Label>خط العناوين</Label>
+                      <Label htmlFor="primary-font" className="text-xs">الخط الأساسي</Label>
                       <Select
-                        value={customization.fonts?.heading || 'Cairo'}
-                        onValueChange={(value) => setCustomization(prev => ({
+                        value={storeData.customization.fonts.primary}
+                        onValueChange={(value) => setStoreData(prev => ({
                           ...prev,
-                          fonts: { ...prev.fonts, heading: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fontOptions.map(font => (
-                            <SelectItem key={font.value} value={font.value}>
-                              <span style={{ fontFamily: font.value }}>{font.preview}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>خط النصوص</Label>
-                      <Select
-                        value={customization.fonts?.body || 'Cairo'}
-                        onValueChange={(value) => setCustomization(prev => ({
-                          ...prev,
-                          fonts: { ...prev.fonts, body: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {fontOptions.map(font => (
-                            <SelectItem key={font.value} value={font.value}>
-                              <span style={{ fontFamily: font.value }}>{font.preview}</span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>حجم الخط الأساسي</Label>
-                      <Select
-                        value={customization.fonts?.size?.medium || '16px'}
-                        onValueChange={(value) => setCustomization(prev => ({
-                          ...prev,
-                          fonts: {
-                            ...prev.fonts,
-                            size: { ...prev.fonts?.size, medium: value }
+                          customization: {
+                            ...prev.customization,
+                            fonts: {
+                              ...prev.customization.fonts,
+                              primary: value
+                            }
                           }
                         }))}
                       >
@@ -693,517 +771,696 @@ export default function AdvancedStoreCustomization() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="14px">صغير (14px)</SelectItem>
-                          <SelectItem value="16px">عادي (16px)</SelectItem>
-                          <SelectItem value="18px">كبير (18px)</SelectItem>
-                          <SelectItem value="20px">كبير جداً (20px)</SelectItem>
+                          {fontOptions.map((font) => (
+                            <SelectItem key={font.value} value={font.value}>
+                              <div className="text-right">
+                                <div className="font-medium">{font.name}</div>
+                                <div className="text-xs text-gray-500">{font.preview}</div>
+                              </div>
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </div>
+                </TabsContent>
 
-              {/* Layout Tab */}
-              <TabsContent value="layout">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Layout className="h-5 w-5" />
-                      التخطيط
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    <div>
-                      <Label>نمط الهيدر</Label>
-                      <Select
-                        value={customization.layout?.headerStyle || 'modern'}
-                        onValueChange={(value: any) => setCustomization(prev => ({
-                          ...prev,
-                          layout: { ...prev.layout, headerStyle: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="modern">عصري</SelectItem>
-                          <SelectItem value="classic">كلاسيكي</SelectItem>
-                          <SelectItem value="minimal">بسيط</SelectItem>
-                          <SelectItem value="elegant">أنيق</SelectItem>
-                          <SelectItem value="transparent">شفاف</SelectItem>
-                          <SelectItem value="gradient">متدرج</SelectItem>
-                        </SelectContent>
-                      </Select>
+                <TabsContent value="layout" className="space-y-6 mt-6">
+                  {/* Header Layout */}
+                  <div>
+                    <Label className="text-sm font-medium">تخطيط الهيدر</Label>
+                    <div className="grid grid-cols-1 gap-2 mt-2">
+                      {headerLayouts.map((layout) => (
+                        <div
+                          key={layout.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-colors ${
+                            storeData.customization.header.layout === layout.id
+                              ? 'border-primary bg-primary/5'
+                              : 'border-gray-200 hover:border-primary/50'
+                          }`}
+                          onClick={() => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                layout: layout.id
+                              }
+                            }
+                          }))}
+                        >
+                          <div className="font-medium text-sm">{layout.name}</div>
+                          <div className="text-xs text-gray-500 mt-1">{layout.description}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Header Options */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">خيارات الهيدر</Label>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-search" className="text-xs">إظهار البحث</Label>
+                        <Switch
+                          id="show-search"
+                          checked={storeData.customization.header.showSearch}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                showSearch: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-cart" className="text-xs">إظهار السلة</Label>
+                        <Switch
+                          id="show-cart"
+                          checked={storeData.customization.header.showCart}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                showCart: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-account" className="text-xs">إظهار الحساب</Label>
+                        <Switch
+                          id="show-account"
+                          checked={storeData.customization.header.showAccount}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                showAccount: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="sticky-header" className="text-xs">هيدر ثابت</Label>
+                        <Switch
+                          id="sticky-header"
+                          checked={storeData.customization.header.sticky}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                sticky: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-categories" className="text-xs">إظهار الفئات</Label>
+                        <Switch
+                          id="show-categories"
+                          checked={storeData.customization.header.showCategories}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                showCategories: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-phone" className="text-xs">إظهار رقم الهاتف</Label>
+                        <Switch
+                          id="show-phone"
+                          checked={storeData.customization.header.showPhone}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              header: {
+                                ...prev.customization.header,
+                                showPhone: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Homepage Sections */}
+                  <div className="space-y-4">
+                    <Label className="text-sm font-medium">أقسام الصفحة الرئيسية</Label>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-hero" className="text-xs">عرض البانر الرئيسي</Label>
+                        <Switch
+                          id="show-hero"
+                          checked={storeData.customization.homepage.showHeroSlider}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              homepage: {
+                                ...prev.customization.homepage,
+                                showHeroSlider: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-featured" className="text-xs">المنتجات المميزة</Label>
+                        <Switch
+                          id="show-featured"
+                          checked={storeData.customization.homepage.showFeaturedProducts}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              homepage: {
+                                ...prev.customization.homepage,
+                                showFeaturedProducts: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-categories-home" className="text-xs">عرض الفئات</Label>
+                        <Switch
+                          id="show-categories-home"
+                          checked={storeData.customization.homepage.showCategories}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              homepage: {
+                                ...prev.customization.homepage,
+                                showCategories: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-newsletter" className="text-xs">النشرة البريدية</Label>
+                        <Switch
+                          id="show-newsletter"
+                          checked={storeData.customization.homepage.showNewsletter}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              homepage: {
+                                ...prev.customization.homepage,
+                                showNewsletter: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="show-testimonials" className="text-xs">آراء العملاء</Label>
+                        <Switch
+                          id="show-testimonials"
+                          checked={storeData.customization.homepage.showTestimonials}
+                          onCheckedChange={(checked) => setStoreData(prev => ({
+                            ...prev,
+                            customization: {
+                              ...prev.customization,
+                              homepage: {
+                                ...prev.customization.homepage,
+                                showTestimonials: checked
+                              }
+                            }
+                          }))}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
+          {/* Contact Information */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Phone className="h-5 w-5" />
+                معلومات التواصل
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="store-phone">رقم الهاتف</Label>
+                <Input
+                  id="store-phone"
+                  value={storeData.contact.phone}
+                  onChange={(e) => setStoreData(prev => ({
+                    ...prev,
+                    contact: {
+                      ...prev.contact,
+                      phone: e.target.value
+                    }
+                  }))}
+                  placeholder="966501234567"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="store-email">البريد الإلكتروني</Label>
+                <Input
+                  id="store-email"
+                  type="email"
+                  value={storeData.contact.email}
+                  onChange={(e) => setStoreData(prev => ({
+                    ...prev,
+                    contact: {
+                      ...prev.contact,
+                      email: e.target.value
+                    }
+                  }))}
+                  placeholder="info@store.com"
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="store-address">العنوان</Label>
+                <Textarea
+                  id="store-address"
+                  value={storeData.contact.address}
+                  onChange={(e) => setStoreData(prev => ({
+                    ...prev,
+                    contact: {
+                      ...prev.contact,
+                      address: e.target.value
+                    }
+                  }))}
+                  placeholder="الرياض، المملكة العربية السعودية"
+                  className="mt-1"
+                  rows={3}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Social Media */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                شبكات التواصل الاجتماعي
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {socialPlatforms.map((platform) => (
+                <div key={platform.id}>
+                  <Label htmlFor={`social-${platform.id}`} className="flex items-center gap-2">
+                    <platform.icon className="h-4 w-4" />
+                    {platform.name}
+                  </Label>
+                  <Input
+                    id={`social-${platform.id}`}
+                    value={storeData.customization.social[platform.id] || ''}
+                    onChange={(e) => setStoreData(prev => ({
+                      ...prev,
+                      customization: {
+                        ...prev.customization,
+                        social: {
+                          ...prev.customization.social,
+                          [platform.id]: e.target.value
+                        }
+                      }
+                    }))}
+                    placeholder={platform.placeholder}
+                    className="mt-1"
+                  />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Preview Panel */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Eye className="h-5 w-5" />
+                معاينة المتجر - {previewDevice === 'desktop' ? 'سطح المكتب' : previewDevice === 'tablet' ? 'تابلت' : 'جوال'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`mx-auto border rounded-lg overflow-hidden ${
+                previewDevice === 'desktop' ? 'w-full' : 
+                previewDevice === 'tablet' ? 'w-3/4' : 'w-1/3'
+              }`}>
+                <div 
+                  className="bg-white"
+                  style={{
+                    backgroundColor: storeData.customization.colors.background,
+                    color: storeData.customization.colors.text,
+                    fontFamily: storeData.customization.fonts.primary
+                  }}
+                >
+                  {/* Preview Header */}
+                  <div 
+                    className="border-b px-6 py-4"
+                    style={{
+                      backgroundColor: storeData.customization.colors.headerBackground,
+                      borderColor: storeData.customization.colors.border
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      {/* Logo Area */}
+                      <div className="flex items-center gap-4">
+                        <div 
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold"
+                          style={{ backgroundColor: storeData.customization.colors.primary }}
+                        >
+                          {storeData.name?.charAt(0) || 'م'}
+                        </div>
+                        <div>
+                          <h1 className="font-bold text-lg">{storeData.name || 'اسم المتجر'}</h1>
+                          {storeData.description && (
+                            <p className="text-sm opacity-75">{storeData.description}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Header Actions */}
+                      <div className="flex items-center gap-4">
+                        {storeData.customization.header.showSearch && (
+                          <div className="flex items-center">
+                            <Search className="h-4 w-4 opacity-50" />
+                          </div>
+                        )}
+                        {storeData.customization.header.showCart && (
+                          <div className="flex items-center">
+                            <ShoppingBag className="h-4 w-4 opacity-50" />
+                          </div>
+                        )}
+                        {storeData.customization.header.showAccount && (
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 opacity-50" />
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* إعدادات إضافية للهيدر */}
-                    <Card className="border border-dashed border-gray-300">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-sm font-medium text-gray-700">إعدادات الهيدر المتقدمة</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
+                    {/* Categories */}
+                    {storeData.customization.header.showCategories && (
+                      <div className="flex items-center gap-6 mt-4 pt-4 border-t" style={{ borderColor: storeData.customization.colors.border }}>
+                        <span className="text-sm font-medium">الفئات</span>
+                        <span className="text-sm opacity-75">الإلكترونيات</span>
+                        <span className="text-sm opacity-75">الملابس</span>
+                        <span className="text-sm opacity-75">المنزل</span>
+                      </div>
+                    )}
+
+                    {/* Contact Info */}
+                    {storeData.customization.header.showPhone && storeData.contact.phone && (
+                      <div className="flex items-center gap-4 mt-2">
+                        <Phone className="h-4 w-4 opacity-50" />
+                        <span className="text-sm">{storeData.contact.phone}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preview Content */}
+                  <div className="p-6">
+                    {/* Hero Section */}
+                    {storeData.customization.homepage.showHeroSlider && (
+                      <div className="mb-8">
+                        <div 
+                          className="rounded-lg p-8 text-center text-white"
+                          style={{ backgroundColor: storeData.customization.colors.primary }}
+                        >
+                          <h2 className="text-2xl font-bold mb-2">
+                            {storeData.customization.homepage.heroTexts[0]?.title || 'مرحباً بكم في متجرنا'}
+                          </h2>
+                          <p className="mb-4 opacity-90">
+                            {storeData.customization.homepage.heroTexts[0]?.subtitle || 'أفضل المنتجات بأسعار مميزة'}
+                          </p>
+                          <div 
+                            className="inline-block px-6 py-2 rounded-lg font-medium"
+                            style={{ 
+                              backgroundColor: storeData.customization.colors.accent,
+                              color: storeData.customization.colors.background 
+                            }}
+                          >
+                            {storeData.customization.homepage.heroTexts[0]?.buttonText || 'تسوق الآن'}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Categories Section */}
+                    {storeData.customization.homepage.showCategories && (
+                      <div className="mb-8">
+                        <h3 className="text-xl font-bold mb-4">الفئات الرئيسية</h3>
+                        <div className="grid grid-cols-4 gap-4">
+                          {['الإلكترونيات', 'الملابس', 'المنزل', 'الجمال'].map((category, index) => (
+                            <div 
+                              key={index}
+                              className="p-4 rounded-lg text-center border hover:shadow-lg transition-shadow cursor-pointer"
+                              style={{ borderColor: storeData.customization.colors.border }}
+                            >
+                              <div 
+                                className="w-12 h-12 rounded-full mx-auto mb-2 flex items-center justify-center"
+                                style={{ backgroundColor: `${storeData.customization.colors.primary}20` }}
+                              >
+                                <Package className="h-6 w-6" style={{ color: storeData.customization.colors.primary }} />
+                              </div>
+                              <span className="text-sm font-medium">{category}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Featured Products */}
+                    {storeData.customization.homepage.showFeaturedProducts && (
+                      <div className="mb-8">
+                        <h3 className="text-xl font-bold mb-4">المنتجات المميزة</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                          {[1, 2, 3].map((product) => (
+                            <div 
+                              key={product}
+                              className="border rounded-lg overflow-hidden hover:shadow-lg transition-shadow"
+                              style={{ borderColor: storeData.customization.colors.border }}
+                            >
+                              <div 
+                                className="h-32 flex items-center justify-center"
+                                style={{ backgroundColor: storeData.customization.colors.muted }}
+                              >
+                                <Package className="h-8 w-8 opacity-50" />
+                              </div>
+                              <div className="p-3">
+                                <h4 className="font-medium text-sm mb-1">منتج رقم {product}</h4>
+                                <div className="flex items-center gap-2">
+                                  <span 
+                                    className="font-bold"
+                                    style={{ color: storeData.customization.colors.primary }}
+                                  >
+                                    {99 * product} ريال
+                                  </span>
+                                  <div className="flex items-center">
+                                    <Star className="h-3 w-3 fill-current text-yellow-400" />
+                                    <span className="text-xs opacity-75 mr-1">4.5</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Newsletter */}
+                    {storeData.customization.homepage.showNewsletter && (
+                      <div className="mb-8">
+                        <div 
+                          className="rounded-lg p-6 text-center"
+                          style={{ backgroundColor: `${storeData.customization.colors.primary}10` }}
+                        >
+                          <h3 className="text-lg font-bold mb-2">اشترك في النشرة البريدية</h3>
+                          <p className="text-sm opacity-75 mb-4">احصل على أحدث العروض والمنتجات</p>
+                          <div className="flex gap-2 max-w-sm mx-auto">
+                            <Input placeholder="البريد الإلكتروني" className="text-sm" />
+                            <Button 
+                              size="sm"
+                              style={{ backgroundColor: storeData.customization.colors.primary }}
+                            >
+                              اشتراك
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Preview Footer */}
+                  <div 
+                    className="border-t px-6 py-8 text-center"
+                    style={{
+                      backgroundColor: storeData.customization.footer?.backgroundColor || '#1e293b',
+                      color: storeData.customization.footer?.textColor || '#ffffff',
+                      borderColor: storeData.customization.colors.border
+                    }}
+                  >
+                    <div className="grid grid-cols-3 gap-6 mb-6 text-sm">
+                      <div>
+                        <h4 className="font-medium mb-2">المتجر</h4>
+                        <p className="opacity-75">عن المتجر</p>
+                        <p className="opacity-75">سياسة الإرجاع</p>
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">التواصل</h4>
+                        {storeData.contact.phone && (
+                          <p className="opacity-75">{storeData.contact.phone}</p>
+                        )}
+                        {storeData.contact.email && (
+                          <p className="opacity-75">{storeData.contact.email}</p>
+                        )}
+                      </div>
+                      <div>
+                        <h4 className="font-medium mb-2">تابعنا</h4>
+                        <div className="flex items-center justify-center gap-2">
+                          {Object.entries(storeData.customization.social).filter(([_, url]) => url).map(([platform]) => (
+                            <div key={platform} className="w-6 h-6 rounded bg-white/20 flex items-center justify-center">
+                              <span className="text-xs">{platform.charAt(0).toUpperCase()}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs opacity-75">
+                      © 2024 {storeData.name || 'المتجر'}. جميع الحقوق محفوظة.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Hero Slides Configuration */}
+          {storeData.customization.homepage.showHeroSlider && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Image className="h-5 w-5" />
+                    إعداد البانر الرئيسي
+                  </div>
+                  <Button size="sm" onClick={addHeroSlide}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    إضافة شريحة
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {storeData.customization.homepage.heroTexts.map((slide, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h4 className="font-medium">الشريحة {index + 1}</h4>
+                        {storeData.customization.homepage.heroTexts.length > 1 && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => removeHeroSlide(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label>العنوان الرئيسي</Label>
+                          <Input
+                            value={slide.title}
+                            onChange={(e) => updateHeroSlide(index, 'title', e.target.value)}
+                            placeholder="مرحباً بكم في متجرنا"
+                            className="mt-1"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label>النص الفرعي</Label>
+                          <Input
+                            value={slide.subtitle}
+                            onChange={(e) => updateHeroSlide(index, 'subtitle', e.target.value)}
+                            placeholder="أفضل المنتجات بأسعار مميزة"
+                            className="mt-1"
+                          />
+                        </div>
+                        
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <Label className="text-xs">عرض الشعار</Label>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Switch
-                                checked={customization.layout?.showLogo !== false}
-                                onCheckedChange={(checked) => setCustomization(prev => ({
-                                  ...prev,
-                                  layout: { ...prev.layout, showLogo: checked }
-                                }))}
-                              />
-                              <span className="text-sm text-gray-600">
-                                {customization.layout?.showLogo !== false ? 'ظاهر' : 'مخفي'}
-                              </span>
-                            </div>
+                            <Label>نص الزر</Label>
+                            <Input
+                              value={slide.buttonText}
+                              onChange={(e) => updateHeroSlide(index, 'buttonText', e.target.value)}
+                              placeholder="تسوق الآن"
+                              className="mt-1"
+                            />
                           </div>
-
+                          
                           <div>
-                            <Label className="text-xs">عرض البحث</Label>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Switch
-                                checked={customization.layout?.showSearch !== false}
-                                onCheckedChange={(checked) => setCustomization(prev => ({
-                                  ...prev,
-                                  layout: { ...prev.layout, showSearch: checked }
-                                }))}
-                              />
-                              <span className="text-sm text-gray-600">
-                                {customization.layout?.showSearch !== false ? 'ظاهر' : 'مخفي'}
-                              </span>
-                            </div>
+                            <Label>رابط الزر</Label>
+                            <Input
+                              value={slide.buttonLink || ''}
+                              onChange={(e) => updateHeroSlide(index, 'buttonLink', e.target.value)}
+                              placeholder="/products"
+                              className="mt-1"
+                            />
                           </div>
-
-                          <div>
-                            <Label className="text-xs">عرض سلة التسوق</Label>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Switch
-                                checked={customization.layout?.showCartIcon !== false}
-                                onCheckedChange={(checked) => setCustomization(prev => ({
-                                  ...prev,
-                                  layout: { ...prev.layout, showCartIcon: checked }
-                                }))}
-                              />
-                              <span className="text-sm text-gray-600">
-                                {customization.layout?.showCartIcon !== false ? 'ظاهر' : 'مخفي'}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div>
-                            <Label className="text-xs">عرض قائمة المستخدم</Label>
-                            <div className="flex items-center space-x-2 mt-1">
-                              <Switch
-                                checked={customization.layout?.showUserMenu !== false}
-                                onCheckedChange={(checked) => setCustomization(prev => ({
-                                  ...prev,
-                                  layout: { ...prev.layout, showUserMenu: checked }
-                                }))}
-                              />
-                              <span className="text-sm text-gray-600">
-                                {customization.layout?.showUserMenu !== false ? 'ظاهر' : 'مخفي'}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">موضع الهيدر</Label>
-                          <Select
-                            value={customization.layout?.headerPosition || 'static'}
-                            onValueChange={(value: any) => setCustomization(prev => ({
-                              ...prev,
-                              layout: { ...prev.layout, headerPosition: value }
-                            }))}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="static">عادي</SelectItem>
-                              <SelectItem value="sticky">لاصق</SelectItem>
-                              <SelectItem value="fixed">ثابت</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">ارتفاع الهيدر</Label>
-                          <Select
-                            value={customization.layout?.headerHeight || 'medium'}
-                            onValueChange={(value: any) => setCustomization(prev => ({
-                              ...prev,
-                              layout: { ...prev.layout, headerHeight: value }
-                            }))}
-                          >
-                            <SelectTrigger className="mt-1">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="small">صغير (60px)</SelectItem>
-                              <SelectItem value="medium">متوسط (80px)</SelectItem>
-                              <SelectItem value="large">كبير (100px)</SelectItem>
-                              <SelectItem value="xl">كبير جداً (120px)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <div>
-                      <Label>نمط الفوتر</Label>
-                      <Select 
-                        value={customization.layout?.footerStyle || 'detailed'} 
-                        onValueChange={(value: any) => setCustomization(prev => ({
-                          ...prev,
-                          layout: { ...prev.layout, footerStyle: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="simple">بسيط</SelectItem>
-                          <SelectItem value="detailed">مفصل</SelectItem>
-                          <SelectItem value="compact">مضغوط</SelectItem>
-                          <SelectItem value="mega">شامل</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>عدد أعمدة المنتجات</Label>
-                      <Select 
-                        value={(customization.layout?.productGridColumns || 4).toString()} 
-                        onValueChange={(value) => setCustomization(prev => ({
-                          ...prev,
-                          layout: { ...prev.layout, productGridColumns: parseInt(value) }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="2">2 أعمدة</SelectItem>
-                          <SelectItem value="3">3 أعمدة</SelectItem>
-                          <SelectItem value="4">4 أعمدة</SelectItem>
-                          <SelectItem value="5">5 أعمدة</SelectItem>
-                          <SelectItem value="6">6 أعمدة</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>عرض الحاوية</Label>
-                      <Select 
-                        value={customization.layout?.containerWidth || 'normal'} 
-                        onValueChange={(value: any) => setCustomization(prev => ({
-                          ...prev,
-                          layout: { ...prev.layout, containerWidth: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="narrow">ضيق</SelectItem>
-                          <SelectItem value="normal">عادي</SelectItem>
-                          <SelectItem value="wide">واسع</SelectItem>
-                          <SelectItem value="full">كامل الشاشة</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>نصف قطر الحواف</Label>
-                      <Select 
-                        value={customization.layout?.borderRadius || 'medium'} 
-                        onValueChange={(value: any) => setCustomization(prev => ({
-                          ...prev,
-                          layout: { ...prev.layout, borderRadius: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">بدون</SelectItem>
-                          <SelectItem value="small">صغير</SelectItem>
-                          <SelectItem value="medium">متوسط</SelectItem>
-                          <SelectItem value="large">كبير</SelectItem>
-                          <SelectItem value="full">دائري</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label>المسافات</Label>
-                      <Select 
-                        value={customization.layout?.spacing || 'normal'} 
-                        onValueChange={(value: any) => setCustomization(prev => ({
-                          ...prev,
-                          layout: { ...prev.layout, spacing: value }
-                        }))}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="tight">ضيقة</SelectItem>
-                          <SelectItem value="normal">عادية</SelectItem>
-                          <SelectItem value="relaxed">مريحة</SelectItem>
-                          <SelectItem value="loose">واسعة</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              {/* Pages Tab */}
-              <TabsContent value="pages">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Home className="h-5 w-5" />
-                      الصفحات والميزات
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Homepage Sections */}
-                    <div>
-                      <Label className="text-sm font-medium mb-3 block">أقسام الصفحة الرئيسية</Label>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="hero">قسم البطل</Label>
-                          <Switch
-                            id="hero"
-                            checked={customization.homepage?.showHeroSlider || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              homepage: { ...prev.homepage, showHeroSlider: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="categories">الفئات</Label>
-                          <Switch
-                            id="categories"
-                            checked={customization.homepage?.showCategories || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              homepage: { ...prev.homepage, showCategories: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="featured">المنتجات المميزة</Label>
-                          <Switch
-                            id="featured"
-                            checked={customization.homepage?.showFeaturedProducts || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              homepage: { ...prev.homepage, showFeaturedProducts: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="stats">الإحصائيات</Label>
-                          <Switch
-                            id="stats"
-                            checked={customization.homepage?.showStats || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              homepage: { ...prev.homepage, showStats: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="newsletter">النشرة الإخبارية</Label>
-                          <Switch
-                            id="newsletter"
-                            checked={customization.homepage?.showNewsletter || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              homepage: { ...prev.homepage, showNewsletter: checked }
-                            }))}
-                          />
                         </div>
                       </div>
                     </div>
-
-                    <Separator />
-
-                    {/* Pages Features */}
-                    <div>
-                      <Label className="text-sm font-medium mb-3 block">ميزات الصفحات</Label>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="reviews">التقييمات</Label>
-                          <Switch
-                            id="reviews"
-                            checked={customization.pages?.enableReviews || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              pages: { ...prev.pages, enableReviews: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="wishlist">قائمة الأمنيات</Label>
-                          <Switch
-                            id="wishlist"
-                            checked={customization.pages?.enableWishlist || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              pages: { ...prev.pages, enableWishlist: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="compare">مقارنة المنتجات</Label>
-                          <Switch
-                            id="compare"
-                            checked={customization.pages?.enableCompare || false}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              pages: { ...prev.pages, enableCompare: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="faq">الأسئلة الشائعة</Label>
-                          <Switch
-                            id="faq"
-                            checked={customization.pages?.enableFAQ || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              pages: { ...prev.pages, enableFAQ: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="about">من نحن</Label>
-                          <Switch
-                            id="about"
-                            checked={customization.pages?.enableAboutUs || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              pages: { ...prev.pages, enableAboutUs: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="contact">اتصل بنا</Label>
-                          <Switch
-                            id="contact"
-                            checked={customization.pages?.enableContactUs || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              pages: { ...prev.pages, enableContactUs: checked }
-                            }))}
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Effects */}
-                    <div>
-                      <Label className="text-sm font-medium mb-3 block">التأثيرات المرئية</Label>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="animations">الحركات</Label>
-                          <Switch
-                            id="animations"
-                            checked={customization.effects?.animations || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              effects: { ...prev.effects, animations: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="shadows">الظلال</Label>
-                          <Switch
-                            id="shadows"
-                            checked={customization.effects?.shadows || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              effects: { ...prev.effects, shadows: checked }
-                            }))}
-                          />
-                        </div>
-                        
-                        <div className="flex items-center justify-between">
-                          <Label htmlFor="gradients">التدرجات</Label>
-                          <Switch
-                            id="gradients"
-                            checked={customization.effects?.gradients || true}
-                            onCheckedChange={(checked) => setCustomization(prev => ({
-                              ...prev,
-                              effects: { ...prev.effects, gradients: checked }
-                            }))}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-
-            {/* Reset Button */}
-            <Button 
-              variant="outline" 
-              onClick={resetToDefaults}
-              className="w-full"
-            >
-              <RotateCcw className="h-4 w-4 mr-2" />
-              إعادة تعيين لل��فتراضي
-            </Button>
-          </div>
-
-          {/* Live Preview */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="h-5 w-5" />
-                    معاينة مباشرة
-                  </CardTitle>
-                  <Badge variant="outline">{previewMode}</Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="border rounded-lg overflow-hidden">
-                  <iframe
-                    src={`/store/${store.subdomain}?preview=true&customization=${encodeURIComponent(JSON.stringify(customization))}&_t=${Date.now()}`}
-                    className={`w-full border-0 ${
-                      previewMode === 'desktop' ? 'h-[800px]' :
-                      previewMode === 'tablet' ? 'h-[600px] max-w-md mx-auto' :
-                      'h-[600px] max-w-sm mx-auto'
-                    }`}
-                    title="معاينة المتجر"
-                  />
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          </div>
+          )}
         </div>
       </div>
     </div>

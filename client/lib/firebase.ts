@@ -26,14 +26,12 @@ export const storage = getStorage(app);
 // Initialize Analytics only in browser and production
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
-// Completely disable Firebase in development to prevent network errors
-if (process.env.NODE_ENV === 'development') {
-  console.log('🔧 Development mode: Firebase disabled to prevent network errors');
+// Enable Firebase in development mode for full functionality
+console.log('🔥 Firebase enabled for full database functionality');
 
-  // Set global flag to indicate Firebase is disabled
-  if (typeof window !== 'undefined') {
-    (window as any).__FIREBASE_DISABLED__ = true;
-  }
+// Remove the disabled flag to ensure Firebase works
+if (typeof window !== 'undefined') {
+  delete (window as any).__FIREBASE_DISABLED__;
 }
 
 export default app;
